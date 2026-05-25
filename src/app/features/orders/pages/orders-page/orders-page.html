@@ -1,0 +1,130 @@
+<section class="orders-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Orders</h1>
+      <p class="page-subtitle">Manage ready-made, custom design, and personalized poster orders.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-plus" label="Create order"></button>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <span class="p-input-icon-left search-box">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="search"
+          placeholder="Search order, customer, type"
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+        />
+      </span>
+      <div class="filters">
+        <select [value]="selectedStatus()" (change)="selectedStatus.set($any($event.target).value)">
+          @for (status of statuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+        <button pButton type="button" icon="pi pi-file-pdf" label="Bulk invoice" severity="secondary"></button>
+      </div>
+    </div>
+
+    <p-table
+      [value]="filteredOrders()"
+      dataKey="id"
+      [paginator]="true"
+      [rows]="8"
+      [scrollable]="true"
+      [tableStyle]="{ 'min-width': '980px' }"
+      styleClass="p-datatable-sm"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 3rem"><input type="checkbox" /></th>
+          <th pSortableColumn="orderNo">Order <p-sortIcon field="orderNo" /></th>
+          <th>Customer</th>
+          <th>Type</th>
+          <th>Channel</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Due</th>
+          <th class="text-right">Total</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-order>
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td><strong>{{ order.orderNo }}</strong></td>
+          <td>{{ order.customerName }}</td>
+          <td>{{ order.type }}</td>
+          <td>{{ order.channel }}</td>
+          <td><app-status-chip [value]="order.status" /></td>
+          <td><app-status-chip [value]="order.priority" /></td>
+          <td>{{ order.dueDate | date: 'dd MMM yyyy' }}</td>
+          <td class="text-right">{{ order.total | inr }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              class="p-button-text"
+              pTooltip="View order"
+              (click)="openOrder(order)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>
+
+<p-dialog
+  header="Order details"
+  [modal]="true"
+  [visible]="dialogOpen()"
+  (visibleChange)="dialogOpen.set($event)"
+  [style]="{ width: 'min(720px, 92vw)' }"
+>
+  @if (selectedOrder(); as order) {
+    <div class="order-detail">
+      <div class="detail-grid">
+        <article>
+          <span>Order</span>
+          <strong>{{ order.orderNo }}</strong>
+        </article>
+        <article>
+          <span>Customer</span>
+          <strong>{{ order.customerName }}</strong>
+        </article>
+        <article>
+          <span>Balance</span>
+          <strong>{{ order.total - order.paid | inr }}</strong>
+        </article>
+        <article>
+          <span>Status</span>
+          <app-status-chip [value]="order.status" />
+        </article>
+      </div>
+
+      <h3>Line items</h3>
+      @for (line of order.lines; track line.description) {
+        <div class="line-item">
+          <div>
+            <strong>{{ line.description }}</strong>
+            <span>{{ line.size }} · {{ line.framing }} · Qty {{ line.quantity }}</span>
+          </div>
+          <strong>{{ line.unitPrice * line.quantity | inr }}</strong>
+        </div>
+      }
+
+      <h3>Workflow timeline</h3>
+      <p-timeline [value]="timeline()">
+        <ng-template pTemplate="content" let-event>
+          <strong>{{ event.status }}</strong>
+          <p>{{ event.date | date: 'dd MMM yyyy' }}</p>
+        </ng-template>
+      </p-timeline>
+    </div>
+  }
+</p-dialog>

@@ -1,0 +1,42 @@
+<section class="finance-page">
+  <div>
+    <h1 class="page-title">Finance</h1>
+    <p class="page-subtitle">Revenue, expenses, purchase tracking, partner investments, invoices, and lightweight P&L.</p>
+  </div>
+
+  <div class="kpi-grid">
+    <app-kpi-card label="Gross revenue" [value]="revenue()" [currency]="true" icon="pi pi-indian-rupee" />
+    <app-kpi-card label="Collected" [value]="paid()" [currency]="true" icon="pi pi-wallet" tone="success" />
+    <app-kpi-card label="Expenses" [value]="expenseTotal()" [currency]="true" icon="pi pi-receipt" tone="warning" />
+    <app-kpi-card label="Profit" [value]="profit()" [currency]="true" icon="pi pi-chart-line" tone="accent" />
+  </div>
+
+  <div class="finance-grid">
+    <section class="erp-panel chart-panel">
+      <h2>Profit & loss trend</h2>
+      <p-chart type="bar" [data]="pnlChart()" [options]="chartOptions" />
+    </section>
+
+    <section class="erp-panel">
+      <h2>Recent expenses</h2>
+      <p-table [value]="expenses()" [tableStyle]="{ 'min-width': '620px' }" [scrollable]="true" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Vendor</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-expense>
+          <tr>
+            <td>{{ expense.date | date: 'dd MMM' }}</td>
+            <td>{{ expense.category }}</td>
+            <td>{{ expense.vendor }}</td>
+            <td class="text-right">{{ expense.amount | inr }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </section>
+  </div>
+</section>

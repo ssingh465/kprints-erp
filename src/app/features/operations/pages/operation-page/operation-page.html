@@ -1,0 +1,47 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ title() | titlecase }}</h1>
+      <p class="page-subtitle">ERP-ready operational surface with filters, bulk actions, status tracking, and API-ready data contracts.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-plus" label="New record"></button>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <div class="module-stack">
+        <strong>{{ rows().length }} records</strong>
+        <span>LocalStorage backed mock data · FastAPI repository replacement ready</span>
+      </div>
+      <div class="actions">
+        <button pButton type="button" icon="pi pi-filter" label="Filters" severity="secondary"></button>
+        <button pButton type="button" icon="pi pi-download" label="Export" severity="secondary"></button>
+      </div>
+    </div>
+
+    <p-table [value]="rows()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '840px' }" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Reference</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Owner / Channel</th>
+          <th>Status</th>
+          <th class="text-right">Amount</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td><strong>{{ row.ref }}</strong></td>
+          <td>{{ row.name }}</td>
+          <td>{{ row.category }}</td>
+          <td>{{ row.owner }}</td>
+          <td><app-status-chip [value]="row.status" /></td>
+          <td class="text-right">{{ row.amount ? (row.amount | inr) : '-' }}</td>
+          <td><button pButton type="button" icon="pi pi-eye" class="p-button-text" aria-label="Open record"></button></td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>

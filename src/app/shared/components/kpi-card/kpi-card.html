@@ -1,0 +1,20 @@
+<article class="kpi-card" [class]="'tone-' + tone">
+  <div class="kpi-icon">
+    <i [class]="icon"></i>
+  </div>
+  <div>
+    <p>{{ label }}</p>
+    <strong>
+      @if (currency) {
+        {{ value | currency: 'INR' : 'symbol' : '1.0-0' }}
+      } @else if (isNumber()) {
+        {{ value | number }}
+      } @else {
+        {{ value }}
+      }
+    </strong>
+    @if (trend) {
+      <span>{{ trend }}</span>
+    }
+  </div>
+</article>

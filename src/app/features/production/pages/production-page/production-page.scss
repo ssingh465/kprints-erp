@@ -1,0 +1,94 @@
+.production-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.page-header,
+.panel-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.kanban-column {
+  min-height: 280px;
+  padding: 0.8rem;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+
+    span {
+      display: grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      background: var(--app-surface-soft);
+      border-radius: 50%;
+      font-weight: 750;
+    }
+  }
+}
+
+.job-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.job-card,
+.empty-stage {
+  padding: 0.8rem;
+  background: var(--app-surface-soft);
+  border-radius: 8px;
+}
+
+.job-card {
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  p,
+  span,
+  small {
+    display: block;
+    margin: 0.4rem 0 0;
+  }
+
+  span,
+  small {
+    color: var(--app-muted);
+    font-size: 0.82rem;
+  }
+}
+
+.empty-stage {
+  color: var(--app-muted);
+  font-size: 0.86rem;
+}
+
+.erp-panel {
+  padding: 1rem;
+}
+
+@media (max-width: 760px) {
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

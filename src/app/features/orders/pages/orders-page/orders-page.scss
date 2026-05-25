@@ -1,0 +1,101 @@
+.orders-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.erp-panel {
+  padding: 1rem;
+}
+
+.search-box {
+  width: min(420px, 100%);
+
+  input {
+    width: 100%;
+  }
+}
+
+.filters {
+  display: flex;
+  gap: 0.75rem;
+
+  select {
+    min-height: 40px;
+    min-width: 190px;
+    padding: 0 0.75rem;
+    color: var(--app-text);
+    background: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: 8px;
+  }
+}
+
+.text-right {
+  text-align: right;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  article {
+    padding: 0.8rem;
+    background: var(--app-surface-soft);
+    border-radius: 8px;
+
+    span,
+    strong {
+      display: block;
+    }
+
+    span {
+      color: var(--app-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+  }
+}
+
+.order-detail h3 {
+  margin: 1.2rem 0 0.7rem;
+  font-size: 1rem;
+}
+
+.line-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--app-border);
+
+  span {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--app-muted);
+    font-size: 0.85rem;
+  }
+}
+
+:host ::ng-deep .p-timeline-event-opposite {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .page-header,
+  .filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

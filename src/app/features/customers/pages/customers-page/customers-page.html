@@ -1,0 +1,44 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Customers</h1>
+      <p class="page-subtitle">Unified offline, website, and marketplace customer records.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-user-plus" label="Add customer"></button>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <span class="p-input-icon-left search-box">
+        <i class="pi pi-search"></i>
+        <input pInputText type="search" placeholder="Search customers" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </span>
+      <button pButton type="button" icon="pi pi-download" label="Export" severity="secondary"></button>
+    </div>
+
+    <p-table [value]="filtered()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '820px' }" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>City</th>
+          <th>Source</th>
+          <th class="text-right">Orders</th>
+          <th class="text-right">Lifetime value</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-customer>
+        <tr>
+          <td><strong>{{ customer.name }}</strong></td>
+          <td>{{ customer.phone }}</td>
+          <td>{{ customer.email }}</td>
+          <td>{{ customer.city }}</td>
+          <td><app-status-chip [value]="customer.source" /></td>
+          <td class="text-right">{{ customer.orderCount }}</td>
+          <td class="text-right">{{ customer.lifetimeValue | inr }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </section>
+</section>

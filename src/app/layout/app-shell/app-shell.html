@@ -1,0 +1,113 @@
+<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/dashboard" aria-label="KPrints ERP dashboard">
+      <span class="brand-mark">KP</span>
+      @if (!sidebarCollapsed()) {
+        <span>
+          <strong>KPrints ERP</strong>
+          <small>Poster operations</small>
+        </span>
+      }
+    </a>
+
+    <nav>
+      @for (group of navGroups; track group.label) {
+        <section>
+          @if (!sidebarCollapsed()) {
+            <p>{{ group.label }}</p>
+          }
+          @for (item of group.items; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+              [pTooltip]="sidebarCollapsed() ? item.label : ''"
+              tooltipPosition="right"
+            >
+              <i [class]="item.icon"></i>
+              @if (!sidebarCollapsed()) {
+                <span>{{ item.label }}</span>
+              }
+            </a>
+          }
+        </section>
+      }
+    </nav>
+  </aside>
+
+  <div class="main-column">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-bars"
+          class="p-button-text desktop-toggle"
+          pTooltip="Collapse sidebar"
+          (click)="toggleSidebar()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-bars"
+          class="p-button-text mobile-toggle"
+          pTooltip="Open navigation"
+          (click)="mobileMenuOpen.set(true)"
+        ></button>
+        <div>
+          <span class="breadcrumb">Dashboard / {{ breadcrumbs() }}</span>
+          <strong>Today, 24 May 2026</strong>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-moon"
+          class="p-button-text"
+          pTooltip="Toggle theme"
+          (click)="theme.toggle()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-bell"
+          class="p-button-text"
+          pTooltip="Notifications"
+          (click)="notificationsOpen.set(true)"
+        ></button>
+        <button pButton type="button" icon="pi pi-plus" label="New Order"></button>
+      </div>
+    </header>
+
+    <main>
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<p-drawer [(visible)]="mobileMenuOpen" header="KPrints ERP">
+  <nav class="drawer-nav">
+    @for (group of navGroups; track group.label) {
+      <p>{{ group.label }}</p>
+      @for (item of group.items; track item.route) {
+        <a [routerLink]="item.route" (click)="mobileMenuOpen.set(false)">
+          <i [class]="item.icon"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    }
+  </nav>
+</p-drawer>
+
+<p-drawer [(visible)]="notificationsOpen" position="right" header="Notifications">
+  <div class="notification-list">
+    @for (notification of notifications; track notification) {
+      <article>
+        <i class="pi pi-info-circle"></i>
+        <span>{{ notification }}</span>
+      </article>
+    }
+  </div>
+</p-drawer>

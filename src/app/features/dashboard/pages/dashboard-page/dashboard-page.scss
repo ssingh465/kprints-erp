@@ -1,0 +1,159 @@
+.dashboard {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  min-width: 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 0.8fr;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.wide {
+  grid-column: span 2;
+}
+
+.erp-panel {
+  min-width: 0;
+  max-width: 100%;
+  padding: 1rem;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 760;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: var(--app-muted);
+    font-size: 0.83rem;
+  }
+}
+
+.chart-panel {
+  min-height: 360px;
+
+  p-chart {
+    display: block;
+    height: 280px;
+  }
+}
+
+.pipeline-list,
+.alert-list,
+.poster-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pipeline-list article,
+.alert-list article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.8rem;
+  background: var(--app-surface-soft);
+  border-radius: 8px;
+
+  strong,
+  span {
+    display: block;
+  }
+
+  span {
+    margin-top: 0.2rem;
+    color: var(--app-muted);
+    font-size: 0.82rem;
+  }
+}
+
+.alert-list article {
+  display: grid;
+
+  p-progressbar {
+    width: 100%;
+  }
+}
+
+.poster-list article {
+  display: grid;
+  gap: 0.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--app-border);
+
+  span {
+    color: var(--app-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  strong {
+    font-size: 0.95rem;
+  }
+
+  em {
+    color: var(--app-primary);
+    font-size: 0.82rem;
+    font-style: normal;
+    font-weight: 700;
+  }
+}
+
+:host ::ng-deep .p-timeline-event-opposite {
+  display: none;
+}
+
+:host ::ng-deep .p-datatable-thead > tr > th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.text-right {
+  text-align: right;
+}
+
+@media (max-width: 1200px) {
+  .kpi-grid,
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .kpi-grid,
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+}

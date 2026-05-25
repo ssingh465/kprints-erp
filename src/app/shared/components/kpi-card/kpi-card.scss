@@ -1,0 +1,61 @@
+.kpi-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.9rem;
+  min-height: 132px;
+  padding: 1rem;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+
+  p {
+    margin: 0;
+    color: var(--app-muted);
+    font-size: 0.82rem;
+    font-weight: 650;
+  }
+
+  strong {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 1.55rem;
+    line-height: 1.15;
+  }
+
+  span {
+    display: block;
+    margin-top: 0.45rem;
+    color: var(--app-muted);
+    font-size: 0.82rem;
+  }
+}
+
+.kpi-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone), transparent 88%);
+  border-radius: 8px;
+}
+
+.tone-primary {
+  --tone: var(--app-primary);
+}
+
+.tone-success {
+  --tone: var(--app-success);
+}
+
+.tone-warning {
+  --tone: var(--app-warning);
+}
+
+.tone-danger {
+  --tone: var(--app-danger);
+}
+
+.tone-accent {
+  --tone: var(--app-accent);
+}

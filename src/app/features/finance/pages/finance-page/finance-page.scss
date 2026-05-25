@@ -1,0 +1,43 @@
+.finance-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.kpi-grid,
+.finance-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.kpi-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.finance-grid {
+  grid-template-columns: 1.2fr 0.8fr;
+}
+
+.erp-panel {
+  padding: 1rem;
+}
+
+.erp-panel h2 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+.chart-panel p-chart {
+  display: block;
+  height: 340px;
+}
+
+.text-right {
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .kpi-grid,
+  .finance-grid {
+    grid-template-columns: 1fr;
+  }
+}

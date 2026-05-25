@@ -1,0 +1,32 @@
+<section class="settings-page">
+  <div>
+    <h1 class="page-title">Settings</h1>
+    <p class="page-subtitle">Theme, local data, API readiness, PWA posture, and future auth preparation.</p>
+  </div>
+
+  <div class="settings-grid">
+    <article class="erp-panel">
+      <div>
+        <strong>Theme architecture</strong>
+        <p>Dark mode is token-driven and ready for user preferences.</p>
+      </div>
+      <button pButton type="button" icon="pi pi-moon" label="Toggle theme" (click)="theme.toggle()"></button>
+    </article>
+
+    <article class="erp-panel">
+      <div>
+        <strong>Mock persistence</strong>
+        <p>Reset seeded localStorage data for demos and testing.</p>
+      </div>
+      <button pButton type="button" icon="pi pi-refresh" label="Reset data" severity="secondary" (click)="resetData()"></button>
+    </article>
+
+    <article class="erp-panel">
+      <div>
+        <strong>FastAPI migration</strong>
+        <p>Repositories isolate storage so HTTP implementations can replace localStorage later.</p>
+      </div>
+      <span>API-ready</span>
+    </article>
+  </div>
+</section>
