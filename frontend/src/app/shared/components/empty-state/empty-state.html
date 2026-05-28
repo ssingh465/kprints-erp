@@ -1,0 +1,13 @@
+<div class="empty-state animate-fade-in">
+  <div class="empty-state__icon">
+    <i [class]="icon"></i>
+  </div>
+  <h3 class="empty-state__title">{{ title }}</h3>
+  @if (description) {
+    <p class="empty-state__description">{{ description }}</p>
+  }
+  @if (actionLabel) {
+    <button pButton type="button" [icon]="actionIcon" [label]="actionLabel"></button>
+  }
+  <ng-content />
+</div>

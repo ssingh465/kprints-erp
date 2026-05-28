@@ -1,0 +1,250 @@
+<section class="orders-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Orders</h1>
+      <p class="page-subtitle">Orders placed in {{ periodLabel() }}.</p>
+    </div>
+    <div class="header-actions">
+      <app-period-selector (periodChange)="onPeriodChange()" />
+      <button pButton type="button" icon="pi pi-plus" label="New order" (click)="openCreateOrder()"></button>
+    </div>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input
+          pInputText
+          type="search"
+          placeholder="Search order, customer, type"
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+        />
+      </label>
+      <div class="filters">
+        <p-select
+          [options]="statuses"
+          [ngModel]="selectedStatus()"
+          (ngModelChange)="selectedStatus.set($event)"
+          styleClass="filter-select"
+        />
+        <button pButton type="button" icon="pi pi-file-pdf" label="Bulk invoice" severity="secondary"></button>
+      </div>
+    </div>
+
+    @if (ordersLoading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <div class="app-table-wrapper">
+    <p-table
+      [value]="filteredOrders()"
+      dataKey="id"
+      [paginator]="true"
+      [rows]="8"
+      [scrollable]="true"
+      [tableStyle]="{ 'min-width': '980px' }"
+      styleClass="app-table p-datatable-sm"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 3rem"><input type="checkbox" /></th>
+          <th pSortableColumn="orderNo">Order <p-sortIcon field="orderNo" /></th>
+          <th>Customer</th>
+          <th>Type</th>
+          <th>Channel</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Due</th>
+          <th class="text-right">Total</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-order>
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td><strong>{{ order.orderNo }}</strong></td>
+          <td>{{ order.customerName }}</td>
+          <td>{{ order.type }}</td>
+          <td>{{ order.channel }}</td>
+          <td><app-status-chip [value]="order.status" /></td>
+          <td><app-status-chip [value]="order.priority" /></td>
+          <td>{{ order.dueDate | date: 'dd MMM yyyy' }}</td>
+          <td class="text-right">{{ order.total | inr }}</td>
+          <td>
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              class="p-button-text"
+              pTooltip="View order"
+              (click)="openOrder(order)"
+            ></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    }
+  </section>
+</section>
+
+<p-dialog
+  header="Order details"
+  [modal]="true"
+  [visible]="dialogOpen()"
+  (visibleChange)="dialogOpen.set($event)"
+  [style]="{ width: 'min(720px, 92vw)' }"
+>
+  @if (selectedOrder(); as order) {
+    <div class="order-detail">
+      <div class="detail-grid">
+        <article>
+          <span>Order</span>
+          <strong>{{ order.orderNo }}</strong>
+        </article>
+        <article>
+          <span>Customer</span>
+          <strong>{{ order.customerName }}</strong>
+        </article>
+        <article>
+          <span>Balance</span>
+          <strong>{{ order.total - order.paid | inr }}</strong>
+        </article>
+        <article>
+          <span>Status</span>
+          <app-status-chip [value]="order.status" />
+        </article>
+      </div>
+
+      <h3>Line items</h3>
+      @for (line of order.lines; track line.description) {
+        <div class="line-item">
+          <div>
+            <strong>{{ line.description }}</strong>
+            <span>{{ line.size }} · {{ line.framing }} · Qty {{ line.quantity }}</span>
+          </div>
+          <strong>{{ line.unitPrice * line.quantity | inr }}</strong>
+        </div>
+      }
+
+      <h3>Workflow timeline</h3>
+      <p-timeline [value]="timeline()">
+        <ng-template pTemplate="content" let-event>
+          <strong>{{ event.status }}</strong>
+          <p>{{ event.date | date: 'dd MMM yyyy' }}</p>
+        </ng-template>
+      </p-timeline>
+    </div>
+  }
+</p-dialog>
+
+<!-- Create Order Dialog -->
+<p-dialog
+  header="New order"
+  [modal]="true"
+  [(visible)]="createOrderOpen"
+  [style]="{ width: 'min(600px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="p-3">
+    <form (ngSubmit)="saveOrder()" #orderForm="ngForm">
+      <div class="flex flex-column gap-2 mb-3">
+        <label for="customerId" class="text-label">Customer</label>
+        <p-select
+          [options]="customerOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="newOrder.customerId"
+          name="customerId"
+          inputId="customerId"
+          styleClass="w-full"
+        />
+      </div>
+
+      <div class="grid flex-row gap-3 mb-3">
+        <div class="col flex flex-column gap-2">
+          <label for="type" class="text-label">Order Type</label>
+          <p-select
+            [options]="orderTypes"
+            [(ngModel)]="newOrder.type"
+            name="type"
+            inputId="type"
+            styleClass="w-full"
+          />
+        </div>
+        <div class="col flex flex-column gap-2">
+          <label for="channel" class="text-label">Channel</label>
+          <p-select
+            [options]="channels"
+            [(ngModel)]="newOrder.channel"
+            name="channel"
+            inputId="channel"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+
+      <div class="grid flex-row gap-3 mb-3">
+        <div class="col flex flex-column gap-2">
+          <label for="priority" class="text-label">Priority</label>
+          <p-select
+            [options]="priorities"
+            [(ngModel)]="newOrder.priority"
+            name="priority"
+            inputId="priority"
+            styleClass="w-full"
+          />
+        </div>
+        <div class="col flex flex-column gap-2">
+          <label for="dueDate" class="text-label">Due Date</label>
+          <input pInputText id="dueDate" name="dueDate" type="date" [(ngModel)]="newOrder.dueDate" required class="w-full" />
+        </div>
+      </div>
+
+      <hr class="border-gray-200 my-4" style="border: 0; border-top: 1px solid var(--app-border);" />
+
+      <h4 class="font-bold text-base mb-3 text-primary">Line Item Detail</h4>
+
+      <div class="flex flex-column gap-2 mb-3">
+        <label for="lineDescription" class="text-label">Poster/Product Description</label>
+        <input pInputText id="lineDescription" name="lineDescription" [(ngModel)]="newOrder.lineDescription" required placeholder="e.g. Star Wars Retro Poster A3" class="w-full" />
+      </div>
+
+      <div class="grid flex-row gap-3 mb-3">
+        <div class="col flex flex-column gap-2">
+          <label for="lineSize" class="text-label">Size</label>
+          <input pInputText id="lineSize" name="lineSize" [(ngModel)]="newOrder.lineSize" required placeholder="e.g. A3, 12x18" class="w-full" />
+        </div>
+        <div class="col flex flex-column gap-2">
+          <label for="lineFraming" class="text-label">Framing</label>
+          <p-select
+            [options]="framingOptions"
+            [(ngModel)]="newOrder.lineFraming"
+            name="lineFraming"
+            inputId="lineFraming"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+
+      <div class="grid flex-row gap-3 mb-4">
+        <div class="col flex flex-column gap-2">
+          <label for="lineQuantity" class="text-label">Quantity</label>
+          <input pInputText id="lineQuantity" name="lineQuantity" type="number" min="1" [(ngModel)]="newOrder.lineQuantity" required class="w-full" />
+        </div>
+        <div class="col flex flex-column gap-2">
+          <label for="lineUnitPrice" class="text-label">Unit Price (INR)</label>
+          <input pInputText id="lineUnitPrice" name="lineUnitPrice" type="number" min="1" [(ngModel)]="newOrder.lineUnitPrice" required class="w-full" />
+        </div>
+      </div>
+
+      <div class="flex justify-content-end gap-2 mt-4">
+        <button pButton type="button" label="Cancel" class="p-button-outlined p-button-secondary" (click)="createOrderOpen = false"></button>
+        <button pButton type="submit" label="Save Order" [disabled]="!orderForm.valid || !newOrder.customerId" class="p-button-primary"></button>
+      </div>
+    </form>
+  </div>
+</p-dialog>
+

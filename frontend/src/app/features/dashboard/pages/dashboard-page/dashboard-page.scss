@@ -1,0 +1,137 @@
+.dashboard {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 0.8fr;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.wide {
+  grid-column: span 2;
+}
+
+.erp-panel,
+.section-card {
+  min-width: 0;
+  max-width: 100%;
+  padding: var(--space-5);
+}
+
+.chart-panel {
+  min-height: 380px;
+
+  p-chart {
+    display: block;
+    height: 300px;
+  }
+}
+
+.chart-container {
+  padding: var(--space-2);
+  background: color-mix(in srgb, var(--surface-2) 50%, transparent);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.pipeline-list,
+.alert-list,
+.poster-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pipeline-list article,
+.alert-list article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition:
+    background var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out);
+
+  strong,
+  span {
+    display: block;
+  }
+
+  span {
+    margin-top: 0.2rem;
+    color: var(--app-muted);
+    font-size: 0.8125rem;
+  }
+
+  &:hover {
+    background: var(--surface-hover);
+    transform: translateX(2px);
+  }
+}
+
+.alert-list article {
+  display: grid;
+}
+
+.poster-list article {
+  display: grid;
+  gap: 0.2rem;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: padding-left var(--motion-fast) var(--ease-out);
+
+  &:hover {
+    padding-left: var(--space-2);
+  }
+
+  span {
+    color: var(--app-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    font-size: 0.9375rem;
+    font-weight: 650;
+  }
+
+  em {
+    color: var(--app-primary);
+    font-size: 0.8125rem;
+    font-style: normal;
+    font-weight: 700;
+  }
+}
+
+.table-panel {
+  .app-table-wrapper {
+    margin-top: var(--space-2);
+  }
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wide {
+    grid-column: auto;
+  }
+}

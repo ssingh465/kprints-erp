@@ -1,0 +1,52 @@
+// Global button polish — complements PrimeNG Lara preset
+
+.p-button {
+  transition:
+    background var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
+
+  &:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+
+  &:not(:disabled):active {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: var(--focus-ring-offset);
+  }
+}
+
+.p-button:not(.p-button-text):not(.p-button-outlined):not(.p-button-link) {
+  box-shadow: var(--shadow-sm);
+
+  &:not(:disabled):hover {
+    box-shadow: var(--shadow-md);
+  }
+}
+
+.p-button-outlined {
+  border-color: var(--border-strong);
+
+  &:not(:disabled):hover {
+    background: var(--surface-hover);
+  }
+}
+
+.p-button-text,
+.p-button-link {
+  &:not(:disabled):hover {
+    background: var(--surface-hover);
+    transform: none;
+  }
+}
+
+.p-button-icon-only {
+  width: 2.5rem;
+  height: 2.5rem;
+}

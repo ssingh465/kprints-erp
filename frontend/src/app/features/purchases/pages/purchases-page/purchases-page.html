@@ -1,0 +1,85 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Purchases</h1>
+      <p class="page-subtitle">Purchases and expenses in {{ periodLabel() }}.</p>
+    </div>
+    <div class="header-actions">
+      <app-period-selector (periodChange)="onPeriodChange()" />
+      <button pButton type="button" icon="pi pi-plus" label="Record purchase" (click)="openAdd()"></button>
+    </div>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" placeholder="Search purchases" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <div class="app-table-wrapper">
+    <p-table [value]="filtered()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '860px' }" styleClass="app-table p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Date</th>
+          <th>Vendor</th>
+          <th>Category</th>
+          <th>Payment</th>
+          <th>Status</th>
+          <th class="text-right">Amount</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.date | date: 'mediumDate' }}</td>
+          <td><strong>{{ row.vendor }}</strong></td>
+          <td>{{ row.category }}</td>
+          <td>{{ row.paymentMode }}</td>
+          <td><app-status-chip [value]="'Recorded'" /></td>
+          <td class="text-right">{{ row.amount | inr }}</td>
+          <td>
+            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger" (click)="remove(row)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    }
+  </section>
+</section>
+
+<p-dialog header="Record purchase" [modal]="true" [(visible)]="dialogOpen" [style]="{ width: 'min(500px, 95vw)' }">
+  <form (ngSubmit)="save()" #form="ngForm" class="p-3">
+    <div class="field"><label>Date</label><input pInputText type="date" name="date" [(ngModel)]="newExpense.date" required class="w-full" /></div>
+    <div class="field"><label>Category</label>
+      <p-select
+        [options]="expenseCategoryOptions"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="newExpense.category"
+        name="category"
+        styleClass="w-full"
+      />
+    </div>
+    <div class="field"><label>Vendor</label><input pInputText name="vendor" [(ngModel)]="newExpense.vendor" required class="w-full" /></div>
+    <div class="field"><label>Amount (INR)</label><input pInputText type="number" name="amount" [(ngModel)]="newExpense.amount" required class="w-full" /></div>
+    <div class="field"><label>Payment mode</label>
+      <p-select
+        [options]="paymentModes"
+        [(ngModel)]="newExpense.paymentMode"
+        name="paymentMode"
+        styleClass="w-full"
+      />
+    </div>
+    <div class="field"><label>Notes</label><input pInputText name="notes" [(ngModel)]="newExpense.notes" class="w-full" /></div>
+    <div class="actions-end">
+      <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="dialogOpen = false"></button>
+      <button pButton type="submit" label="Save" [disabled]="!form.valid"></button>
+    </div>
+  </form>
+</p-dialog>

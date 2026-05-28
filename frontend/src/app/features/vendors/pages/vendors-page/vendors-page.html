@@ -1,0 +1,59 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Vendors</h1>
+      <p class="page-subtitle">Supplier directory, contacts, and outstanding payables.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-plus" label="Add vendor" (click)="openAdd()"></button>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" placeholder="Search vendors" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <p-table [value]="filtered()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '820px' }" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Vendor</th>
+          <th>Contact</th>
+          <th>Phone</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th class="text-right">Outstanding</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td><strong>{{ row.name }}</strong></td>
+          <td>{{ row.contact }}</td>
+          <td>{{ row.phone }}</td>
+          <td>{{ row.category }}</td>
+          <td><app-status-chip [value]="row.outstanding > 0 ? 'Payable' : 'Clear'" /></td>
+          <td class="text-right">{{ row.outstanding | inr }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    }
+  </section>
+</section>
+
+<p-dialog header="Add vendor" [modal]="true" [(visible)]="dialogOpen" [style]="{ width: 'min(500px, 95vw)' }">
+  <form (ngSubmit)="save()" #form="ngForm" class="p-3">
+    <div class="field"><label>Name</label><input pInputText name="name" [(ngModel)]="newSupplier.name" required class="w-full" /></div>
+    <div class="field"><label>Contact</label><input pInputText name="contact" [(ngModel)]="newSupplier.contact" required class="w-full" /></div>
+    <div class="field"><label>Phone</label><input pInputText name="phone" [(ngModel)]="newSupplier.phone" required class="w-full" /></div>
+    <div class="field"><label>Category</label><input pInputText name="category" [(ngModel)]="newSupplier.category" required class="w-full" /></div>
+    <div class="field"><label>Outstanding (INR)</label><input pInputText type="number" name="outstanding" [(ngModel)]="newSupplier.outstanding" required class="w-full" /></div>
+    <div class="actions-end">
+      <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="dialogOpen = false"></button>
+      <button pButton type="submit" label="Save" [disabled]="!form.valid"></button>
+    </div>
+  </form>
+</p-dialog>

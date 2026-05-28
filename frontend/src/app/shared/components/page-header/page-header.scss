@@ -1,0 +1,8 @@
+.page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  position: relative;
+  z-index: 20;
+}

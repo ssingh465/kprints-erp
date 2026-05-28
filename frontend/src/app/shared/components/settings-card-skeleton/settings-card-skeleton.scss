@@ -1,0 +1,15 @@
+.settings-card-skeleton {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  > div {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.55rem;
+    min-width: min(100%, 280px);
+  }
+}

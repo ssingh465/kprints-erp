@@ -1,0 +1,17 @@
+{
+  "name": "kprints-erp-monorepo",
+  "version": "1.0.0",
+  "description": "Monorepo for KPrints ERP - Poster Operations Management Platform",
+  "private": true,
+  "scripts": {
+    "start": "npm start --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "watch": "npm run watch --prefix frontend",
+    "test": "npm run test --prefix frontend",
+    "backend:dev": "npm run dev --prefix backend",
+    "backend:build": "npm run build --prefix backend",
+    "backend:start": "npm run start --prefix backend",
+    "db:push": "npm run prisma:migrate --prefix backend",
+    "dev:all": "npx.cmd concurrently \"npm run backend:dev\" \"npm run start\""
+  }
+}

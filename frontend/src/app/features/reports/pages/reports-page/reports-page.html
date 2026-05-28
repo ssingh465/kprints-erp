@@ -1,0 +1,21 @@
+<section class="reports-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Reports & Analytics</h1>
+      <p class="page-subtitle">Operational, sales, inventory, shipment, and financial reporting packs.</p>
+    </div>
+  </div>
+
+  <div class="report-grid">
+    @for (report of reports; track report.route) {
+      <a class="erp-panel report-card" [routerLink]="report.route">
+        <i [class]="report.icon"></i>
+        <div>
+          <strong>{{ report.title }}</strong>
+          <p>{{ report.description }}</p>
+        </div>
+        <span class="pi pi-arrow-right card-arrow" aria-hidden="true"></span>
+      </a>
+    }
+  </div>
+</section>

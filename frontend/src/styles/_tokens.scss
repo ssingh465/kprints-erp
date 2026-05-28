@@ -1,0 +1,134 @@
+// Design token system — light mode defaults on :root, dark overrides on .app-dark
+
+:root {
+  color-scheme: light;
+
+  // Brand & semantic colors
+  --app-primary: #4338ca;
+  --app-primary-strong: #3730a3;
+  --app-primary-soft: rgba(67, 56, 202, 0.1);
+  --app-accent: #6366f1;
+  --app-accent-soft: rgba(99, 102, 241, 0.12);
+  --app-text: #0f172a;
+  --app-muted: #64748b;
+  --app-muted-strong: #475569;
+  --app-success: #059669;
+  --app-success-soft: rgba(5, 150, 105, 0.12);
+  --app-warning: #d97706;
+  --app-warning-soft: rgba(217, 119, 6, 0.12);
+  --app-danger: #dc2626;
+  --app-danger-soft: rgba(220, 38, 38, 0.12);
+  --app-info: #0284c7;
+  --app-info-soft: rgba(2, 132, 199, 0.12);
+
+  // Layered surfaces
+  --app-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-surface-soft: #f1f5f9;
+  --surface-1: var(--app-surface);
+  --surface-2: var(--app-surface-soft);
+  --surface-3: #e8eef5;
+  --surface-hover: rgba(15, 23, 42, 0.04);
+  --surface-active: rgba(67, 56, 202, 0.08);
+  --surface-overlay: rgba(15, 23, 42, 0.45);
+
+  // Borders
+  --app-border: rgba(15, 23, 42, 0.1);
+  --card-border: rgba(15, 23, 42, 0.08);
+  --border-subtle: rgba(15, 23, 42, 0.06);
+  --border-strong: rgba(15, 23, 42, 0.14);
+
+  // Focus & interaction
+  --focus-ring: rgba(67, 56, 202, 0.35);
+  --focus-ring-offset: 2px;
+
+  // Shadows
+  --app-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.1);
+  --shadow-hover: 0 16px 48px rgba(15, 23, 42, 0.12);
+
+  // Radius scale
+  --app-radius: 10px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 999px;
+
+  // Spacing scale
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-9: 2.5rem;
+  --space-10: 3rem;
+
+  // Motion
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 320ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  // Sidebar (always dark)
+  --sidebar-bg: #0b1220;
+  --sidebar-bg-elevated: #111827;
+  --sidebar-text: #cbd5e1;
+  --sidebar-muted: #64748b;
+  --sidebar-active: rgba(99, 102, 241, 0.16);
+  --sidebar-hover: rgba(255, 255, 255, 0.06);
+  --sidebar-indicator: #818cf8;
+}
+
+.app-dark {
+  color-scheme: dark;
+
+  --app-primary: #818cf8;
+  --app-primary-strong: #a5b4fc;
+  --app-primary-soft: rgba(129, 140, 248, 0.14);
+  --app-accent: #6366f1;
+  --app-accent-soft: rgba(99, 102, 241, 0.16);
+  --app-text: #f1f5f9;
+  --app-muted: #94a3b8;
+  --app-muted-strong: #cbd5e1;
+  --app-success: #34d399;
+  --app-success-soft: rgba(52, 211, 153, 0.14);
+  --app-warning: #fbbf24;
+  --app-warning-soft: rgba(251, 191, 36, 0.14);
+  --app-danger: #f87171;
+  --app-danger-soft: rgba(248, 113, 113, 0.14);
+  --app-info: #38bdf8;
+  --app-info-soft: rgba(56, 189, 248, 0.14);
+
+  --app-bg: #0b1120;
+  --app-surface: #111827;
+  --app-surface-soft: #1a2332;
+  --surface-1: var(--app-surface);
+  --surface-2: var(--app-surface-soft);
+  --surface-3: #243044;
+  --surface-hover: rgba(255, 255, 255, 0.05);
+  --surface-active: rgba(129, 140, 248, 0.12);
+  --surface-overlay: rgba(0, 0, 0, 0.55);
+
+  --app-border: rgba(148, 163, 184, 0.14);
+  --card-border: rgba(148, 163, 184, 0.1);
+  --border-subtle: rgba(148, 163, 184, 0.08);
+  --border-strong: rgba(148, 163, 184, 0.2);
+
+  --focus-ring: rgba(129, 140, 248, 0.45);
+
+  --app-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 20px 56px rgba(0, 0, 0, 0.4);
+
+  --sidebar-bg: #070b14;
+  --sidebar-bg-elevated: #0f172a;
+}

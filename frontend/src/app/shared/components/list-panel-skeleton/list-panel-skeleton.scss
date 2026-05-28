@@ -1,0 +1,24 @@
+.list-panel-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.list-panel-skeleton-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--app-border);
+
+  &:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+}

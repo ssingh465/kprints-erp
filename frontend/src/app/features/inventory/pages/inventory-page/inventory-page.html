@@ -1,0 +1,228 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Inventory</h1>
+      <p class="page-subtitle">
+        Track materials and stock levels. Purchases record expenses only — add materials here, then log stock movements.
+      </p>
+    </div>
+    <div class="header-actions">
+      <button pButton type="button" icon="pi pi-plus" label="Add material" (click)="openAddItem()"></button>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-arrows-h"
+        label="Stock movement"
+        severity="secondary"
+        [disabled]="items().length === 0"
+        (click)="openStockMovement()"
+      ></button>
+    </div>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" placeholder="Search material, SKU, category" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+      <button
+        pButton
+        type="button"
+        icon="pi pi-shopping-cart"
+        label="Create purchase"
+        severity="secondary"
+        routerLink="/purchases"
+        [queryParams]="{ new: 'true' }"
+      ></button>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <div class="app-table-wrapper">
+    <p-table [value]="filtered()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '980px' }" styleClass="app-table p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>SKU</th>
+          <th>Item</th>
+          <th>Category</th>
+          <th>Available</th>
+          <th>Reorder</th>
+          <th>Stock health</th>
+          <th class="text-right">Unit cost</th>
+          <th>Last movement</th>
+          <th>Alert</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-item>
+        <tr>
+          <td><strong>{{ item.sku }}</strong></td>
+          <td>{{ item.name }}</td>
+          <td>{{ item.category }}</td>
+          <td>{{ item.quantity }} {{ item.unit }}</td>
+          <td>{{ item.reorderLevel }} {{ item.unit }}</td>
+          <td><p-progressbar [value]="stockValue(item.quantity, item.reorderLevel)" [showValue]="false" /></td>
+          <td class="text-right">{{ item.unitCost | inr }}</td>
+          <td>{{ item.lastMovement }}</td>
+          <td><app-status-chip [value]="item.quantity <= item.reorderLevel ? 'Low Stock' : 'Healthy'" /></td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9" class="empty-message">
+            No materials yet. Click <strong>Add material</strong> to create inventory items.
+            @if (suppliers().length === 0) {
+              <span class="empty-hint">You need at least one <a routerLink="/vendors">vendor</a> first.</span>
+            }
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    }
+  </section>
+</section>
+
+<p-dialog
+  header="Add material"
+  [modal]="true"
+  [(visible)]="addItemOpen"
+  [style]="{ width: 'min(560px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="p-3">
+    @if (suppliers().length === 0) {
+      <p class="form-hint warn">
+        No vendors found. <a routerLink="/vendors">Add a vendor</a> before creating inventory materials.
+      </p>
+    }
+
+    <form (ngSubmit)="saveItem()" #itemForm="ngForm">
+      <div class="field">
+        <label>SKU</label>
+        <input pInputText name="sku" [(ngModel)]="newItem.sku" required placeholder="e.g. PAPER-MATTE-A3" class="w-full" />
+      </div>
+      <div class="field">
+        <label>Material name</label>
+        <input pInputText name="name" [(ngModel)]="newItem.name" required placeholder="e.g. Matte paper roll A3" class="w-full" />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Category</label>
+          <p-select
+            [options]="categories"
+            [(ngModel)]="newItem.category"
+            name="category"
+            styleClass="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Vendor</label>
+          <p-select
+            [options]="supplierOptions()"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="newItem.supplierId"
+            name="supplierId"
+            styleClass="w-full"
+            [disabled]="suppliers().length === 0"
+          />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Unit</label>
+          <input pInputText name="unit" [(ngModel)]="newItem.unit" required placeholder="roll, bottle, sheet" class="w-full" />
+        </div>
+        <div class="field">
+          <label>Initial quantity</label>
+          <input pInputText type="number" min="0" name="quantity" [(ngModel)]="newItem.quantity" required class="w-full" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Reorder level</label>
+          <input pInputText type="number" min="0" name="reorderLevel" [(ngModel)]="newItem.reorderLevel" required class="w-full" />
+        </div>
+        <div class="field">
+          <label>Unit cost (INR)</label>
+          <input pInputText type="number" min="0" name="unitCost" [(ngModel)]="newItem.unitCost" required class="w-full" />
+        </div>
+      </div>
+
+      @if (saveError()) {
+        <p class="form-hint warn">{{ saveError() }}</p>
+      }
+
+      <div class="actions-end">
+        <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="addItemOpen = false"></button>
+        <button
+          pButton
+          type="submit"
+          label="Save material"
+          [disabled]="!itemForm.valid || !newItem.supplierId || suppliers().length === 0"
+        ></button>
+      </div>
+    </form>
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="Log stock movement"
+  [modal]="true"
+  [(visible)]="stockMovementOpen"
+  [style]="{ width: 'min(500px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="p-3">
+    <form (ngSubmit)="saveStockMovement()" #movementForm="ngForm">
+      <div class="field">
+        <label>Inventory item</label>
+        <p-select
+          [options]="itemOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="movement.itemId"
+          name="itemId"
+          inputId="itemId"
+          styleClass="w-full"
+        />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Direction</label>
+          <p-select
+            [options]="directionOptions"
+            optionLabel="label"
+            optionValue="value"
+            [(ngModel)]="movement.direction"
+            name="direction"
+            styleClass="w-full"
+          />
+        </div>
+        <div class="field">
+          <label>Quantity</label>
+          <input pInputText type="number" min="1" name="qty" [(ngModel)]="movement.quantity" required class="w-full" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Notes</label>
+        <input pInputText name="notes" [(ngModel)]="movement.notes" required placeholder="e.g. Vendor restock, print run consumption" class="w-full" />
+      </div>
+
+      @if (saveError()) {
+        <p class="form-hint warn">{{ saveError() }}</p>
+      }
+
+      <div class="actions-end">
+        <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="stockMovementOpen = false"></button>
+        <button pButton type="submit" label="Save movement" [disabled]="!movementForm.valid || !movement.itemId"></button>
+      </div>
+    </form>
+  </div>
+</p-dialog>

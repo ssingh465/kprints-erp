@@ -1,0 +1,57 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Coupons & Discounts</h1>
+      <p class="page-subtitle">Promotional codes for website and marketplace channels.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-plus" label="Add coupon" (click)="openAdd()"></button>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" placeholder="Search codes" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <p-table [value]="filtered()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '640px' }" styleClass="p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Code</th>
+          <th>Discount</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td><strong>{{ row.code }}</strong></td>
+          <td>{{ row.discount }}%</td>
+          <td><app-status-chip [value]="row.active ? 'Active' : 'Inactive'" /></td>
+          <td>
+            <button pButton type="button" [label]="row.active ? 'Deactivate' : 'Activate'" class="p-button-text" (click)="toggleActive(row)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    }
+  </section>
+</section>
+
+<p-dialog header="Add coupon" [modal]="true" [(visible)]="dialogOpen" [style]="{ width: 'min(420px, 95vw)' }">
+  <form (ngSubmit)="save()" #form="ngForm" class="p-3">
+    <div class="field"><label>Code</label><input pInputText name="code" [(ngModel)]="newCoupon.code" required class="w-full" /></div>
+    <div class="field"><label>Discount (%)</label><input pInputText type="number" min="1" max="100" name="discount" [(ngModel)]="newCoupon.discount" required class="w-full" /></div>
+    <div class="field">
+      <label><input type="checkbox" name="active" [(ngModel)]="newCoupon.active" /> Active</label>
+    </div>
+    <div class="actions-end">
+      <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="dialogOpen = false"></button>
+      <button pButton type="submit" label="Save" [disabled]="!form.valid"></button>
+    </div>
+  </form>
+</p-dialog>

@@ -1,0 +1,47 @@
+<article class="kpi-card stat-card app-card-hover animate-slide-up" [class]="'tone-' + tone">
+  @if (loading) {
+    <p-skeleton shape="circle" size="36px" />
+    <div class="kpi-skeleton-body skeleton-shimmer">
+      <p-skeleton width="62%" height="0.75rem" borderRadius="6px" />
+      <p-skeleton width="48%" height="1.25rem" borderRadius="6px" />
+      @if (delta || trend || showProgress) {
+        <p-skeleton width="72%" height="0.75rem" borderRadius="6px" />
+      }
+    </div>
+  } @else {
+    <div class="kpi-icon">
+      <i [class]="icon"></i>
+    </div>
+    <div class="kpi-body">
+      <div class="kpi-main">
+        <p class="kpi-label">{{ label }}</p>
+        <strong class="kpi-value">
+          @if (currency) {
+            {{ displayValue() | currency: 'INR' : 'symbol' : '1.0-0' }}
+          } @else if (isNumber()) {
+            {{ displayValue() | number }}
+          } @else {
+            {{ displayValue() }}
+          }
+        </strong>
+      </div>
+      @if (delta || trend) {
+        <div class="kpi-meta-row">
+          @if (delta) {
+            <span class="metric-delta" [class]="deltaDirection">
+              <i [class]="deltaIcon"></i>
+              {{ delta }}
+            </span>
+          } @else if (trend) {
+            <span class="kpi-trend">{{ trend }}</span>
+          }
+        </div>
+      }
+      @if (showProgress) {
+        <div class="kpi-progress-track">
+          <p-progressbar [value]="progressValue" [showValue]="false" />
+        </div>
+      }
+    </div>
+  }
+</article>

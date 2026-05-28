@@ -1,0 +1,244 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Customer {
+  id            String   @id @default(uuid()) @db.Uuid
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  name          String
+  phone         String
+  email         String
+  city          String
+  source        String   // "Offline" | "Website" | "Marketplace"
+  lifetimeValue Float    @default(0)
+  orderCount    Int      @default(0)
+  orders        Order[]
+}
+
+model PosterCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String   @unique
+  posters   Poster[]
+}
+
+model Poster {
+  id            String          @id @default(uuid()) @db.Uuid
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  sku           String          @unique
+  title         String
+  category      String          // "Minimal" | "Pop Culture" | "Personalized" | "Travel" etc
+  categoryId    String?         @db.Uuid
+  categoryRef   PosterCategory? @relation(fields: [categoryId], references: [id])
+  tags          String[]
+  size          String
+  price         Float
+  stock         Int             @default(0)
+  soldThisMonth Int             @default(0)
+  active        Boolean         @default(true)
+  orderItems    OrderItem[]
+}
+
+model Order {
+  id            String          @id @default(uuid()) @db.Uuid
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  orderNo       String          @unique
+  customerId    String          @db.Uuid
+  customer      Customer        @relation(fields: [customerId], references: [id])
+  customerName  String          // Denormalized name for speed
+  type          String          // "Ready-made" | "Custom Design" | "Personalized"
+  channel       String          // "Offline" | "Website" | "Marketplace"
+  status        String          @default("Draft")
+  priority      String          @default("Normal") // "Normal" | "High" | "Rush"
+  dueDate       DateTime
+  total         Float
+  paid          Float           @default(0)
+  lines         OrderItem[]
+  productionJob ProductionJob?
+  shipment      Shipment?
+  invoices      Invoice[]
+  artworks      ArtworkUpload[]
+}
+
+model OrderItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orderId     String   @db.Uuid
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  posterId    String?  @db.Uuid
+  poster      Poster?  @relation(fields: [posterId], references: [id])
+  description String
+  size        String
+  quantity    Int
+  unitPrice   Float
+  framing     String   @default("No frame")
+}
+
+model Supplier {
+  id             String          @id @default(uuid()) @db.Uuid
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  name           String
+  contact        String
+  phone          String
+  category       String
+  outstanding    Float           @default(0)
+  inventoryItems InventoryItem[]
+  expenses       Expense[]
+}
+
+model InventoryItem {
+  id            String              @id @default(uuid()) @db.Uuid
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  sku           String              @unique
+  name          String
+  category      String              // "Poster Stock" | "Paper Rolls" | "Ink" | "Frames" | "Lamination Sheets" | "Packaging Material" | "Accessories"
+  supplierId    String              @db.Uuid
+  supplier      Supplier            @relation(fields: [supplierId], references: [id])
+  unit          String
+  quantity      Float               @default(0)
+  reorderLevel  Float               @default(0)
+  unitCost      Float               @default(0)
+  lastMovement  String?
+  movements     InventoryMovement[]
+}
+
+model InventoryMovement {
+  id              String        @id @default(uuid()) @db.Uuid
+  createdAt       DateTime      @default(now())
+  inventoryItemId String        @db.Uuid
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  quantity        Float         // Positive for purchase, negative for consumption
+  type            String        // "Purchase", "Consumption", "Adjustment"
+  reference       String?       // "ORD-1048", "PO-2038" etc
+  notes           String?
+}
+
+model Expense {
+  id          String    @id @default(uuid()) @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  date        DateTime
+  category    String
+  vendor      String
+  supplierId  String?   @db.Uuid
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  amount      Float
+  paymentMode String    // "Cash" | "UPI" | "Card" | "Bank Transfer"
+  notes       String?
+}
+
+model ProductionJob {
+  id                  String    @id @default(uuid()) @db.Uuid
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  jobNo               String    @unique
+  orderId             String    @unique @db.Uuid
+  order               Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderNo             String
+  customerName        String
+  stage               String    // Maps to OrderStatus
+  priority            String    @default("Normal") // "Normal" | "High" | "Rush"
+  size                String
+  material            String
+  estimatedCompletion DateTime?
+  operator            String?
+}
+
+model Shipment {
+  id           String    @id @default(uuid()) @db.Uuid
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  orderId      String    @unique @db.Uuid
+  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderNo      String
+  customerName String
+  carrier      String
+  trackingNo   String    @unique
+  status       String    @default("Packed") // "Packed" | "In Transit" | "Out for Delivery" | "Delivered" | "Delayed"
+  city         String
+  eta          DateTime?
+}
+
+model Coupon {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  code      String   @unique
+  discount  Float
+  active    Boolean  @default(true)
+}
+
+model Partner {
+  id                 String              @id @default(uuid()) @db.Uuid
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  name               String              @unique
+  profitSharePercent Float
+  investments        PartnerInvestment[]
+}
+
+model PartnerInvestment {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  partnerId String   @db.Uuid
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  amount    Float
+  date      DateTime
+  notes     String?
+}
+
+model Invoice {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  invoiceNo String   @unique
+  orderId   String   @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount    Float
+  pdfUrl    String?
+}
+
+model ArtworkUpload {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orderId   String   @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fileName  String
+  fileUrl   String
+  mimeType  String
+}
+
+model DashboardSnapshot {
+  id               String   @id @default(uuid()) @db.Uuid
+  createdAt        DateTime @default(now())
+  revenue          Float
+  expenses         Float
+  orders           Int
+  pendingPrintJobs Int
+  inventoryAlerts  Int
+  profit           Float
+}
+
+model Settings {
+  id             String   @id @default(uuid()) @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  companyName    String   @default("KPrints")
+  currency       String   @default("INR")
+  setupCompleted Boolean  @default(false)
+  demoMode       Boolean  @default(false)
+}

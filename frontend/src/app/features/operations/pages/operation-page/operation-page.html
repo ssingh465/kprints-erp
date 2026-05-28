@@ -1,0 +1,196 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ title() | titlecase }}</h1>
+      <p class="page-subtitle">Operational surface with filters, bulk actions, and status tracking.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-plus" label="New record" (click)="openNewRecord()"></button>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <div class="module-stack">
+        <strong>{{ rows().length }} records</strong>
+        <span>{{ dataSourceLabel }}</span>
+      </div>
+      <div class="actions">
+        <button pButton type="button" icon="pi pi-filter" label="Filters" severity="secondary"></button>
+        <button pButton type="button" icon="pi pi-download" label="Export" severity="secondary"></button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <div class="app-table-wrapper">
+    <p-table [value]="rows()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '840px' }" styleClass="app-table p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Reference</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Owner / Channel</th>
+          <th>Status</th>
+          <th class="text-right">Amount</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td><strong>{{ row.ref }}</strong></td>
+          <td>{{ row.name }}</td>
+          <td>{{ row.category }}</td>
+          <td>{{ row.owner }}</td>
+          <td><app-status-chip [value]="row.status" /></td>
+          <td class="text-right">{{ row.amount ? (row.amount | inr) : '-' }}</td>
+          <td><button pButton type="button" icon="pi pi-eye" class="p-button-text" aria-label="Open record"></button></td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    }
+  </section>
+</section>
+
+<!-- Dynamic Modal for Shipments, Vendors, or Expenses -->
+<p-dialog
+  [header]="'Add New ' + (title() | titlecase)"
+  [modal]="true"
+  [(visible)]="dialogOpen"
+  [style]="{ width: 'min(500px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="p-3">
+    <form (ngSubmit)="saveRecord()" #recordForm="ngForm">
+      
+      <!-- Shipment Form Fields -->
+      @if (module().includes('shipment') || module().includes('print-queue')) {
+        <div class="flex flex-column gap-2 mb-3">
+          <label for="orderNo" class="font-semibold text-sm">Order Number</label>
+          <input pInputText id="orderNo" name="orderNo" [(ngModel)]="newRecord.orderNo" required class="w-full" />
+        </div>
+        <div class="flex flex-column gap-2 mb-3">
+          <label for="customerName" class="font-semibold text-sm">Customer Name</label>
+          <input pInputText id="customerName" name="customerName" [(ngModel)]="newRecord.customerName" required placeholder="e.g. Rahul Sharma" class="w-full" />
+        </div>
+        <div class="grid flex-row gap-3 mb-3">
+          <div class="col flex flex-column gap-2">
+            <label for="carrier" class="text-label">Carrier</label>
+            <p-select
+              [options]="carrierOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="newRecord.carrier"
+              name="carrier"
+              inputId="carrier"
+              styleClass="w-full"
+            />
+          </div>
+          <div class="col flex flex-column gap-2">
+            <label for="trackingNo" class="font-semibold text-sm">Tracking Number</label>
+            <input pInputText id="trackingNo" name="trackingNo" [(ngModel)]="newRecord.trackingNo" required class="w-full" />
+          </div>
+        </div>
+        <div class="grid flex-row gap-3 mb-3">
+          <div class="col flex flex-column gap-2">
+            <label for="city" class="font-semibold text-sm">Destination City</label>
+            <input pInputText id="city" name="city" [(ngModel)]="newRecord.city" required placeholder="e.g. Mumbai" class="w-full" />
+          </div>
+          <div class="col flex flex-column gap-2">
+            <label for="eta" class="font-semibold text-sm">Estimated Delivery Date</label>
+            <input pInputText id="eta" name="eta" type="date" [(ngModel)]="newRecord.eta" required class="w-full" />
+          </div>
+        </div>
+        <div class="flex flex-column gap-2 mb-4">
+          <label for="shipStatus" class="text-label">Status</label>
+          <p-select
+            [options]="shipStatuses"
+            [(ngModel)]="newRecord.status"
+            name="shipStatus"
+            inputId="shipStatus"
+            styleClass="w-full"
+          />
+        </div>
+      }
+
+      <!-- Vendor Form Fields -->
+      @if (module().includes('vendor')) {
+        <div class="flex flex-column gap-2 mb-3">
+          <label for="vName" class="font-semibold text-sm">Vendor / Company Name</label>
+          <input pInputText id="vName" name="vName" [(ngModel)]="newRecord.name" required placeholder="e.g. Classic Paper Mills" class="w-full" />
+        </div>
+        <div class="flex flex-column gap-2 mb-3">
+          <label for="contact" class="font-semibold text-sm">Contact Person</label>
+          <input pInputText id="contact" name="contact" [(ngModel)]="newRecord.contact" required placeholder="e.g. Amit Patel" class="w-full" />
+        </div>
+        <div class="flex flex-column gap-2 mb-3">
+          <label for="phone" class="font-semibold text-sm">Phone Number</label>
+          <input pInputText id="phone" name="phone" [(ngModel)]="newRecord.phone" required placeholder="e.g. +91 98765 43210" class="w-full" />
+        </div>
+        <div class="grid flex-row gap-3 mb-4">
+          <div class="col flex flex-column gap-2">
+            <label for="vCat" class="font-semibold text-sm">Category</label>
+            <input pInputText id="vCat" name="vCat" [(ngModel)]="newRecord.category" required placeholder="e.g. Paper rolls, inks" class="w-full" />
+          </div>
+          <div class="col flex flex-column gap-2">
+            <label for="outstanding" class="font-semibold text-sm">Outstanding Invoiced (INR)</label>
+            <input pInputText id="outstanding" name="outstanding" type="number" min="0" [(ngModel)]="newRecord.outstanding" required class="w-full" />
+          </div>
+        </div>
+      }
+
+      <!-- Expense / Purchase Form Fields -->
+      @if (module().includes('purchase') || module().includes('expense')) {
+        <div class="grid flex-row gap-3 mb-3">
+          <div class="col flex flex-column gap-2">
+            <label for="date" class="font-semibold text-sm">Expense Date</label>
+            <input pInputText id="date" name="date" type="date" [(ngModel)]="newRecord.date" required class="w-full" />
+          </div>
+          <div class="col flex flex-column gap-2">
+            <label for="pCat" class="text-label">Category</label>
+            <p-select
+              [options]="expenseCategoryOptions"
+              optionLabel="label"
+              optionValue="value"
+              [(ngModel)]="newRecord.category"
+              name="pCat"
+              inputId="pCat"
+              styleClass="w-full"
+            />
+          </div>
+        </div>
+        <div class="flex flex-column gap-2 mb-3">
+          <label for="vendor" class="font-semibold text-sm">Vendor / Paid To</label>
+          <input pInputText id="vendor" name="vendor" [(ngModel)]="newRecord.vendor" required placeholder="e.g. Delhi Packaging Depot" class="w-full" />
+        </div>
+        <div class="grid flex-row gap-3 mb-3">
+          <div class="col flex flex-column gap-2">
+            <label for="amount" class="font-semibold text-sm">Amount Paid (INR)</label>
+            <input pInputText id="amount" name="amount" type="number" min="1" [(ngModel)]="newRecord.amount" required class="w-full" />
+          </div>
+          <div class="col flex flex-column gap-2">
+            <label for="paymentMode" class="text-label">Payment Mode</label>
+            <p-select
+              [options]="paymentModes"
+              [(ngModel)]="newRecord.paymentMode"
+              name="paymentMode"
+              inputId="paymentMode"
+              styleClass="w-full"
+            />
+          </div>
+        </div>
+        <div class="flex flex-column gap-2 mb-4">
+          <label for="notes" class="font-semibold text-sm">Notes / Details</label>
+          <input pInputText id="notes" name="notes" [(ngModel)]="newRecord.notes" placeholder="e.g. restocking Cyan ink and lamination sheets" class="w-full" />
+        </div>
+      }
+
+      <div class="flex justify-content-end gap-2 mt-4">
+        <button pButton type="button" label="Cancel" class="p-button-outlined p-button-secondary" (click)="dialogOpen = false"></button>
+        <button pButton type="submit" label="Save Record" [disabled]="!recordForm.valid" class="p-button-primary"></button>
+      </div>
+    </form>
+  </div>
+</p-dialog>
+

@@ -1,0 +1,118 @@
+<section class="production-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Production Workflow</h1>
+      <p class="page-subtitle">Print queue, production stages, priority handling, and material consumption.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-print" label="Assign operator" (click)="openAssignOperator()"></button>
+  </div>
+
+  @if (loading()) {
+    <app-kanban-skeleton [columns]="stages.length" />
+  } @else {
+    <section class="kanban">
+      @for (stage of stages; track stage) {
+        <article class="kanban-column">
+          <header>
+            <strong>{{ stage }}</strong>
+            <span>{{ jobsByStage(stage).length }}</span>
+          </header>
+          <div class="job-list">
+            @for (job of jobsByStage(stage); track job.id) {
+              <div class="job-card">
+                <div>
+                  <strong>{{ job.jobNo }}</strong>
+                  <app-status-chip [value]="job.priority" />
+                </div>
+                <p>{{ job.customerName }}</p>
+                <span>{{ job.size }} · {{ job.material }}</span>
+                <small>{{ job.estimatedCompletion }} · {{ job.operator }}</small>
+              </div>
+            } @empty {
+              <div class="empty-stage">No active jobs</div>
+            }
+          </div>
+        </article>
+      }
+    </section>
+  }
+
+  <section class="erp-panel">
+    <div class="panel-heading">
+      <h2>Print queue</h2>
+    </div>
+    @if (loading()) {
+      <app-table-panel-skeleton [rows]="8" [showToolbar]="false" />
+    } @else {
+      <div class="app-table-wrapper">
+      <p-table [value]="jobs()" [scrollable]="true" [tableStyle]="{ 'min-width': '860px' }" styleClass="app-table p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Job</th>
+            <th>Order</th>
+            <th>Customer</th>
+            <th>Stage</th>
+            <th>Priority</th>
+            <th>Material</th>
+            <th>Operator</th>
+            <th>ETA</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-job>
+          <tr>
+            <td><strong>{{ job.jobNo }}</strong></td>
+            <td>{{ job.orderNo }}</td>
+            <td>{{ job.customerName }}</td>
+            <td><app-status-chip [value]="job.stage" /></td>
+            <td><app-status-chip [value]="job.priority" /></td>
+            <td>{{ job.material }}</td>
+            <td>{{ job.operator }}</td>
+            <td>{{ job.estimatedCompletion }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+      </div>
+    }
+  </section>
+</section>
+
+<!-- Assign Operator Dialog -->
+<p-dialog
+  header="Assign Print Operator"
+  [modal]="true"
+  [(visible)]="assignDialogOpen"
+  [style]="{ width: 'min(450px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="p-3">
+    <form (ngSubmit)="saveOperatorAssignment()" #assignForm="ngForm">
+      <div class="flex flex-column gap-2 mb-3">
+        <label for="jobSelect" class="text-label">Print Job</label>
+        <p-select
+          [options]="jobOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="assignment.jobId"
+          name="jobSelect"
+          inputId="jobSelect"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="flex flex-column gap-2 mb-4">
+        <label for="operator" class="text-label">Operator</label>
+        <p-select
+          [options]="operators"
+          [(ngModel)]="assignment.operator"
+          name="operator"
+          inputId="operator"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="flex justify-content-end gap-2 mt-4">
+        <button pButton type="button" label="Cancel" class="p-button-outlined p-button-secondary" (click)="assignDialogOpen = false"></button>
+        <button pButton type="submit" label="Assign" [disabled]="!assignForm.valid" class="p-button-primary"></button>
+      </div>
+    </form>
+  </div>
+</p-dialog>

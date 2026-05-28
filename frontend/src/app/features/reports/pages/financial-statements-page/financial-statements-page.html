@@ -1,0 +1,75 @@
+<section class="financial-statements-page">
+  <div class="page-header">
+    <div>
+      <a routerLink="/reports" class="back-link">
+        <i class="pi pi-arrow-left"></i>
+        Reports &amp; Analytics
+      </a>
+      <h1 class="page-title">Financial Statements</h1>
+      <p class="page-subtitle">Management accounts from all ERP transactions (INR), last 8 periods.</p>
+    </div>
+  </div>
+
+  <section class="erp-panel statements-panel">
+    <p-tabs value="quarterly">
+      <p-tablist>
+        <p-tab value="quarterly">Quarterly Results</p-tab>
+        <p-tab value="pnl">Profit &amp; Loss</p-tab>
+        <p-tab value="balance_sheet">Balance Sheet</p-tab>
+        <p-tab value="cash_flow">Cash Flow</p-tab>
+      </p-tablist>
+      <p-tabpanels>
+        <p-tabpanel value="quarterly">
+          <app-financial-statement-table
+            [periods]="quarterly()?.periods ?? []"
+            [rows]="quarterly()?.rows ?? []"
+            [loading]="quarterlyLoading()"
+            [error]="quarterlyError()"
+          />
+        </p-tabpanel>
+        <p-tabpanel value="pnl">
+          <app-financial-statement-table
+            [periods]="pnl()?.periods ?? []"
+            [rows]="pnl()?.rows ?? []"
+            [loading]="pnlLoading()"
+            [error]="pnlError()"
+          />
+        </p-tabpanel>
+        <p-tabpanel value="balance_sheet">
+          @if ((balanceSheet()?.notes?.length ?? 0) > 0) {
+            <p-message severity="info">
+              <div class="statement-notes">
+                @for (note of balanceSheet()?.notes ?? []; track note) {
+                  <div>{{ note }}</div>
+                }
+              </div>
+            </p-message>
+          }
+          <app-financial-statement-table
+            [periods]="balanceSheet()?.periods ?? []"
+            [rows]="balanceSheet()?.rows ?? []"
+            [loading]="balanceSheetLoading()"
+            [error]="balanceSheetError()"
+          />
+        </p-tabpanel>
+        <p-tabpanel value="cash_flow">
+          @if ((cashFlow()?.notes?.length ?? 0) > 0) {
+            <p-message severity="info">
+              <div class="statement-notes">
+                @for (note of cashFlow()?.notes ?? []; track note) {
+                  <div>{{ note }}</div>
+                }
+              </div>
+            </p-message>
+          }
+          <app-financial-statement-table
+            [periods]="cashFlow()?.periods ?? []"
+            [rows]="cashFlow()?.rows ?? []"
+            [loading]="cashFlowLoading()"
+            [error]="cashFlowError()"
+          />
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </section>
+</section>
