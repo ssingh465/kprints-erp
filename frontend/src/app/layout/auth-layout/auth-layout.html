@@ -1,0 +1,44 @@
+<div class="auth-layout">
+  <aside class="auth-brand-panel">
+    <div class="brand-top">
+      <span class="brand-mark">KP</span>
+      <span class="brand-name">KPrints ERP</span>
+    </div>
+
+    <div class="brand-body">
+      <div class="brand-illustration" aria-hidden="true">
+        <svg viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="36" y="28" width="120" height="150" rx="10" class="poster poster-back" />
+          <rect x="60" y="18" width="120" height="150" rx="10" class="poster poster-mid" />
+          <rect x="84" y="40" width="120" height="130" rx="10" class="poster poster-front" />
+          <circle cx="120" cy="84" r="20" class="poster-accent" />
+          <rect x="104" y="118" width="80" height="9" rx="4.5" class="poster-line" />
+          <rect x="104" y="134" width="56" height="9" rx="4.5" class="poster-line-soft" />
+        </svg>
+      </div>
+
+      <h1 class="brand-headline">Run your print shop from one place</h1>
+      <p class="brand-subtext">
+        Track orders and production, manage inventory and the print queue, and keep
+        finance and operations in sync — all in a single workspace.
+      </p>
+
+      <ul class="brand-features">
+        @for (feature of features; track feature.text) {
+          <li>
+            <i [class]="feature.icon"></i>
+            <span>{{ feature.text }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <p class="brand-footer">KPrints ERP · Poster operations platform</p>
+  </aside>
+
+  <section class="auth-form-panel">
+    <div class="auth-form-inner">
+      <ng-content />
+    </div>
+  </section>
+</div>

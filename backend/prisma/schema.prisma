@@ -1,0 +1,345 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum AppRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  STAFF
+  DESIGNER
+  PRODUCTION_OPERATOR
+  FINANCE
+  VIEWER
+
+  @@map("app_role")
+}
+
+model AppUser {
+  id             String   @id @db.Uuid // same as auth.users.id
+  email          String   @unique
+  fullName       String   @map("full_name")
+  initials       String
+  role           AppRole  @default(VIEWER)
+  avatarUrl      String?  @map("avatar_url")
+  phone          String?
+  designation    String?
+  department     String?
+  isApproved     Boolean  @default(false) @map("is_approved")
+  isActive       Boolean  @default(true) @map("is_active")
+  sessionVersion Int      @default(0) @map("session_version")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  auditLogs       AuditLog[]
+  invitationsSent UserInvitation[] @relation("InvitedBy")
+
+  @@map("app_users")
+}
+
+model UserInvitation {
+  id          String    @id @default(uuid()) @db.Uuid
+  email       String
+  role        AppRole
+  token       String    @unique
+  invitedById String    @map("invited_by_id") @db.Uuid
+  invitedBy   AppUser   @relation("InvitedBy", fields: [invitedById], references: [id])
+  expiresAt   DateTime  @map("expires_at")
+  acceptedAt  DateTime? @map("accepted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([email])
+  @@map("user_invitations")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  user      AppUser? @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}
+
+model Customer {
+  id            String   @id @default(uuid()) @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  name          String
+  phone         String
+  email         String
+  city          String
+  source        String // "Offline" | "Website" | "Marketplace"
+  lifetimeValue Float    @default(0) @map("lifetime_value")
+  orderCount    Int      @default(0) @map("order_count")
+  orders        Order[]
+
+  @@map("customers")
+}
+
+model PosterCategory {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  name      String   @unique
+  posters   Poster[]
+
+  @@map("poster_categories")
+}
+
+model Poster {
+  id            String          @id @default(uuid()) @db.Uuid
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  sku           String          @unique
+  title         String
+  category      String // "Minimal" | "Pop Culture" | "Personalized" | "Travel" etc
+  categoryId    String?         @map("category_id") @db.Uuid
+  categoryRef   PosterCategory? @relation(fields: [categoryId], references: [id])
+  tags          String[]
+  size          String
+  price         Float
+  stock         Int             @default(0)
+  soldThisMonth Int             @default(0) @map("sold_this_month")
+  active        Boolean         @default(true)
+  orderItems    OrderItem[]
+
+  @@map("posters")
+}
+
+model Order {
+  id            String          @id @default(uuid()) @db.Uuid
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  orderNo       String          @unique @map("order_no")
+  customerId    String          @map("customer_id") @db.Uuid
+  customer      Customer        @relation(fields: [customerId], references: [id])
+  customerName  String          @map("customer_name") // Denormalized name for speed
+  type          String // "Ready-made" | "Custom Design" | "Personalized"
+  channel       String // "Offline" | "Website" | "Marketplace"
+  status        String          @default("Draft")
+  priority      String          @default("Normal") // "Normal" | "High" | "Rush"
+  dueDate       DateTime        @map("due_date")
+  total         Float
+  paid          Float           @default(0)
+  lines         OrderItem[]
+  productionJob ProductionJob?
+  shipment      Shipment?
+  invoices      Invoice[]
+  artworks      ArtworkUpload[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  orderId     String   @map("order_id") @db.Uuid
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  posterId    String?  @map("poster_id") @db.Uuid
+  poster      Poster?  @relation(fields: [posterId], references: [id])
+  description String
+  size        String
+  quantity    Int
+  unitPrice   Float    @map("unit_price")
+  framing     String   @default("No frame")
+
+  @@map("order_items")
+}
+
+model Supplier {
+  id             String          @id @default(uuid()) @db.Uuid
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  name           String
+  contact        String
+  phone          String
+  category       String
+  outstanding    Float           @default(0)
+  inventoryItems InventoryItem[]
+  expenses       Expense[]
+
+  @@map("suppliers")
+}
+
+model InventoryItem {
+  id            String              @id @default(uuid()) @db.Uuid
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  sku           String              @unique
+  name          String
+  category      String // "Poster Stock" | "Paper Rolls" | "Ink" | "Frames" | "Lamination Sheets" | "Packaging Material" | "Accessories"
+  supplierId    String              @map("supplier_id") @db.Uuid
+  supplier      Supplier            @relation(fields: [supplierId], references: [id])
+  unit          String
+  quantity      Float               @default(0)
+  reorderLevel  Float               @default(0) @map("reorder_level")
+  unitCost      Float               @default(0) @map("unit_cost")
+  lastMovement  String?             @map("last_movement")
+  movements     InventoryMovement[]
+
+  @@map("inventory_items")
+}
+
+model InventoryMovement {
+  id              String        @id @default(uuid()) @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at")
+  inventoryItemId String        @map("inventory_item_id") @db.Uuid
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  quantity        Float // Positive for purchase, negative for consumption
+  type            String // "Purchase", "Consumption", "Adjustment"
+  reference       String? // "ORD-1048", "PO-2038" etc
+  notes           String?
+
+  @@map("inventory_movements")
+}
+
+model Expense {
+  id          String    @id @default(uuid()) @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  date        DateTime
+  category    String
+  vendor      String
+  supplierId  String?   @map("supplier_id") @db.Uuid
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  amount      Float
+  paymentMode String    @map("payment_mode") // "Cash" | "UPI" | "Card" | "Bank Transfer"
+  notes       String?
+
+  @@map("expenses")
+}
+
+model ProductionJob {
+  id                  String    @id @default(uuid()) @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  jobNo               String    @unique @map("job_no")
+  orderId             String    @unique @map("order_id") @db.Uuid
+  order               Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderNo             String    @map("order_no")
+  customerName        String    @map("customer_name")
+  stage               String // Maps to OrderStatus
+  priority            String    @default("Normal") // "Normal" | "High" | "Rush"
+  size                String
+  material            String
+  estimatedCompletion DateTime? @map("estimated_completion")
+  operator            String?
+
+  @@map("production_jobs")
+}
+
+model Shipment {
+  id           String    @id @default(uuid()) @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  orderId      String    @unique @map("order_id") @db.Uuid
+  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderNo      String    @map("order_no")
+  customerName String    @map("customer_name")
+  carrier      String
+  trackingNo   String    @unique @map("tracking_no")
+  status       String    @default("Packed") // "Packed" | "In Transit" | "Out for Delivery" | "Delivered" | "Delayed"
+  city         String
+  eta          DateTime?
+
+  @@map("shipments")
+}
+
+model Coupon {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  code      String   @unique
+  discount  Float
+  active    Boolean  @default(true)
+
+  @@map("coupons")
+}
+
+model Partner {
+  id                 String              @id @default(uuid()) @db.Uuid
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  name               String              @unique
+  profitSharePercent Float               @map("profit_share_percent")
+  investments        PartnerInvestment[]
+
+  @@map("partners")
+}
+
+model PartnerInvestment {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  partnerId String   @map("partner_id") @db.Uuid
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  amount    Float
+  date      DateTime
+  notes     String?
+
+  @@map("partner_investments")
+}
+
+model Invoice {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  invoiceNo String   @unique @map("invoice_no")
+  orderId   String   @map("order_id") @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount    Float
+  pdfUrl    String?  @map("pdf_url")
+
+  @@map("invoices")
+}
+
+model ArtworkUpload {
+  id        String   @id @default(uuid()) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  orderId   String   @map("order_id") @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fileName  String   @map("file_name")
+  fileUrl   String   @map("file_url")
+  mimeType  String   @map("mime_type")
+
+  @@map("artwork_uploads")
+}
+
+model DashboardSnapshot {
+  id               String   @id @default(uuid()) @db.Uuid
+  createdAt        DateTime @default(now()) @map("created_at")
+  revenue          Float
+  expenses         Float
+  orders           Int
+  pendingPrintJobs Int      @map("pending_print_jobs")
+  inventoryAlerts  Int      @map("inventory_alerts")
+  profit           Float
+
+  @@map("dashboard_snapshots")
+}
+
+model Settings {
+  id             String   @id @default(uuid()) @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  companyName    String   @default("KPrints") @map("company_name")
+  currency       String   @default("INR")
+  setupCompleted Boolean  @default(false) @map("setup_completed")
+  demoMode       Boolean  @default(false) @map("demo_mode")
+
+  @@map("settings")
+}

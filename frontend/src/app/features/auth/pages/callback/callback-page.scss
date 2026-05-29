@@ -1,0 +1,36 @@
+.callback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  min-height: 100vh;
+  padding: var(--space-6);
+  background: var(--app-bg);
+  text-align: center;
+
+  p {
+    margin: 0;
+    color: var(--app-muted-strong);
+    font-size: 0.95rem;
+  }
+
+  a {
+    color: var(--app-primary);
+    font-weight: 550;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.callback-spinner {
+  font-size: 2rem;
+  color: var(--app-primary);
+}
+
+.callback-error-icon {
+  font-size: 2rem;
+  color: var(--app-danger);
+}

@@ -1,0 +1,59 @@
+<div class="startup">
+  <div class="startup-card">
+    <div class="startup-brand">
+      <span class="brand-mark">KP</span>
+      <div>
+        <strong>KPrints ERP</strong>
+        <small>Poster operations platform</small>
+      </div>
+    </div>
+
+    <h1>Welcome</h1>
+    <p class="startup-lead">
+      Explore the full ERP instantly in a demo sandbox, or sign in to your
+      production workspace.
+    </p>
+
+    <div class="startup-options">
+      <button
+        type="button"
+        class="startup-option startup-option--primary"
+        (click)="goToLogin()"
+      >
+        <i class="pi pi-sign-in"></i>
+        <span class="option-text">
+          <strong>Login to ERP</strong>
+          <small>Access your secured production workspace</small>
+        </span>
+        <i class="pi pi-angle-right option-arrow"></i>
+      </button>
+
+      <button
+        type="button"
+        class="startup-option"
+        [disabled]="enteringDemo()"
+        (click)="continueDemo()"
+      >
+        <i class="pi pi-play-circle"></i>
+        <span class="option-text">
+          <strong>Continue with Demo</strong>
+          <small>Try the platform with sample data — no account needed</small>
+        </span>
+        @if (enteringDemo()) {
+          <i class="pi pi-spin pi-spinner option-arrow"></i>
+        } @else {
+          <i class="pi pi-angle-right option-arrow"></i>
+        }
+      </button>
+    </div>
+
+    @if (demoError()) {
+      <p class="startup-error"><i class="pi pi-exclamation-triangle"></i> {{ demoError() }}</p>
+    }
+
+    <p class="startup-note">
+      Demo mode is a labeled sandbox using shared sample data. User management is
+      disabled and no production sessions are mixed in.
+    </p>
+  </div>
+</div>

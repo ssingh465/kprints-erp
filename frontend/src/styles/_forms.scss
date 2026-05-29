@@ -1,0 +1,123 @@
+// Unified form field styling
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-divider {
+  margin: var(--space-5) 0;
+  border: 0;
+  border-top: 1px solid var(--app-border);
+}
+
+.p-inputtext,
+.p-select,
+.p-multiselect,
+.p-autocomplete-input,
+.p-datepicker-input {
+  min-height: 2.5rem;
+  border-radius: var(--radius-sm);
+  transition:
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.p-inputtext:focus,
+.p-select:not(.p-disabled).p-focus,
+.p-multiselect:not(.p-disabled).p-focus {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.p-select,
+.p-multiselect {
+  width: 100%;
+}
+
+// Page toolbar search — pill-style field (matches former topbar search)
+.search-field,
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: min(420px, 100%);
+  min-height: 2.5rem;
+  padding: 0.55rem 0.85rem;
+  color: var(--app-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+
+  > i {
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+
+  input,
+  .p-inputtext {
+    flex: 1;
+    min-width: 0;
+    min-height: unset;
+    height: auto;
+    padding: 0;
+    border: none !important;
+    outline: none !important;
+    outline-offset: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    color: var(--app-text);
+    font-size: 0.875rem;
+
+    &::placeholder {
+      color: var(--app-muted);
+    }
+
+    &:enabled:hover,
+    &:hover {
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    &:enabled:focus,
+    &:focus,
+    &:focus-visible {
+      border: none !important;
+      outline: none !important;
+      outline-offset: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+
+  &:focus-within {
+    border-color: color-mix(in srgb, var(--app-primary) 40%, var(--border-subtle));
+    box-shadow: 0 0 0 3px var(--focus-ring);
+
+    input,
+    .p-inputtext {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+    }
+  }
+}
+
+.filter-select {
+  min-width: 190px;
+}

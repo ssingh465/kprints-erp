@@ -1,0 +1,88 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Artwork Uploads</h1>
+      <p class="page-subtitle">Customer design files linked to custom and personalized orders.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-upload" label="Upload artwork" (click)="openUpload()"></button>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" placeholder="Search uploads" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <div class="app-table-wrapper">
+    <p-table [value]="filtered()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '820px' }" styleClass="app-table p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>File</th>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Type</th>
+          <th>Uploaded</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td><strong>{{ row.fileName }}</strong></td>
+          <td>{{ row.order?.orderNo || '—' }}</td>
+          <td>{{ row.order?.customerName || '—' }}</td>
+          <td>{{ row.mimeType }}</td>
+          <td>{{ row.createdAt | date: 'medium' }}</td>
+          <td>
+            @if (row.fileUrl) {
+              <a
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                class="p-button-text"
+                [href]="row.fileUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                pTooltip="View file"
+                aria-label="View file"
+              ></a>
+            }
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr><td colspan="6">No artwork uploads yet. Upload a file for a custom order.</td></tr>
+      </ng-template>
+    </p-table>
+    </div>
+    }
+  </section>
+</section>
+
+<p-dialog header="Upload artwork" [modal]="true" [(visible)]="uploadOpen" [style]="{ width: 'min(480px, 95vw)' }">
+  <div class="p-3">
+    <div class="field">
+      <label>Order</label>
+      <p-select
+        [options]="orderOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [(ngModel)]="uploadOrderId"
+        name="uploadOrderId"
+        styleClass="w-full"
+      />
+    </div>
+    <div class="field">
+      <label>Design file</label>
+      <input type="file" accept="image/*,.pdf,.ai,.psd" (change)="onFileSelected($event)" class="w-full" />
+    </div>
+    <div class="actions-end">
+      <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="uploadOpen = false"></button>
+      <button pButton type="button" label="Upload" icon="pi pi-upload" [disabled]="!selectedFile || !uploadOrderId" (click)="submitUpload()"></button>
+    </div>
+  </div>
+</p-dialog>

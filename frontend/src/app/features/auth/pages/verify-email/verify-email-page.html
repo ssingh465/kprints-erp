@@ -1,0 +1,58 @@
+<app-auth-layout>
+  <div class="verify">
+    @if (sent()) {
+      <span class="verify-icon"><i class="pi pi-envelope"></i></span>
+      <h1>Check your inbox</h1>
+      <p>
+        We've sent a new verification link. Click it to confirm your email, then return here to
+        sign in.
+      </p>
+      <a routerLink="/auth/login" class="back-link">
+        <i class="pi pi-arrow-left"></i> Back to sign in
+      </a>
+    } @else {
+      <header class="verify-head">
+        <h1>Verify your email</h1>
+        <p>
+          Your email address hasn't been confirmed yet. Check your inbox for the verification link,
+          or resend it below.
+        </p>
+      </header>
+
+      @if (errorMessage()) {
+        <div class="verify-alert" role="alert">
+          <i class="pi pi-exclamation-circle"></i>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input
+            pInputText
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="you@kprints.com"
+            autocomplete="email"
+            fluid
+          />
+        </div>
+
+        <button
+          pButton
+          type="submit"
+          label="Resend verification email"
+          class="verify-submit"
+          [loading]="submitting()"
+          [disabled]="submitting()"
+        ></button>
+      </form>
+
+      <a routerLink="/auth/login" class="back-link">
+        <i class="pi pi-arrow-left"></i> Back to sign in
+      </a>
+    }
+  </div>
+</app-auth-layout>

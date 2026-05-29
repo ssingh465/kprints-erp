@@ -1,0 +1,146 @@
+<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <aside class="sidebar">
+    <a class="brand" routerLink="/dashboard" aria-label="KPrints ERP dashboard">
+      <span class="brand-mark">KP</span>
+      @if (!sidebarCollapsed()) {
+        <span>
+          <strong>KPrints ERP</strong>
+          <small>Poster operations</small>
+        </span>
+      }
+    </a>
+
+    <nav>
+      @for (group of navGroups(); track group.label) {
+        <section>
+          @if (!sidebarCollapsed()) {
+            <p>{{ group.label }}</p>
+          }
+          @for (item of group.items; track item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
+              [pTooltip]="sidebarCollapsed() ? item.label : ''"
+              tooltipPosition="right"
+            >
+              <i [class]="item.icon"></i>
+              @if (!sidebarCollapsed()) {
+                <span>{{ item.label }}</span>
+              }
+            </a>
+          }
+        </section>
+      }
+    </nav>
+  </aside>
+
+  <div class="main-column">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button
+          pButton
+          type="button"
+          [icon]="sidebarCollapsed() ? 'pi pi-angle-right' : 'pi pi-angle-left'"
+          class="p-button-text desktop-toggle"
+          [pTooltip]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+          (click)="toggleSidebar()"
+        ></button>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-bars"
+          class="p-button-text mobile-toggle"
+          pTooltip="Open navigation"
+          (click)="mobileMenuOpen.set(true)"
+        ></button>
+        <strong class="topbar-date">{{ todayLabel() }}</strong>
+      </div>
+
+      <div class="topbar-actions">
+        @if (isDemo()) {
+          <span class="demo-chip" pTooltip="Sandbox using shared sample data" tooltipPosition="bottom">
+            <i class="pi pi-bolt"></i> Demo Sandbox
+          </span>
+        } @else if (isAuthenticated()) {
+          <span class="auth-chip" pTooltip="Live authenticated session" tooltipPosition="bottom">
+            <i class="pi pi-shield"></i> Signed in
+          </span>
+        }
+        <button
+          pButton
+          type="button"
+          [icon]="theme.darkMode() ? 'pi pi-sun' : 'pi pi-moon'"
+          class="p-button-text"
+          [pTooltip]="theme.darkMode() ? 'Light mode' : 'Dark mode'"
+          (click)="theme.toggle()"
+        ></button>
+        <div class="notification-button-wrap">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-bell"
+            class="p-button-text"
+            pTooltip="Notifications"
+            (click)="notificationsOpen.set(true)"
+          ></button>
+          @if (notificationBadge()) {
+            <span class="notification-button-badge">{{ notificationBadge() }}</span>
+          }
+        </div>
+        <div class="profile-chip">
+          <span>{{ profile().initials }}</span>
+          <div>
+            <strong>{{ profile().name }}</strong>
+            @if (profile().subtitle) {
+              <small>{{ profile().subtitle }}</small>
+            }
+          </div>
+        </div>
+        <button
+          pButton
+          type="button"
+          [icon]="signingOut() ? 'pi pi-spin pi-spinner' : 'pi pi-sign-out'"
+          class="p-button-text"
+          [pTooltip]="isDemo() ? 'Exit demo' : 'Sign out'"
+          tooltipPosition="bottom"
+          [disabled]="signingOut()"
+          (click)="exit()"
+        ></button>
+      </div>
+    </header>
+
+    <main class="page-enter">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<p-drawer [(visible)]="mobileMenuOpen" header="KPrints ERP">
+  <nav class="drawer-nav">
+    @for (group of navGroups(); track group.label) {
+      <p>{{ group.label }}</p>
+      @for (item of group.items; track item.route) {
+        <a [routerLink]="item.route" (click)="mobileMenuOpen.set(false)">
+          <i [class]="item.icon"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    }
+  </nav>
+</p-drawer>
+
+<p-drawer [(visible)]="notificationsOpen" position="right" header="Notifications" styleClass="notification-drawer">
+  <div class="notification-list">
+    @if (notifications().length === 0) {
+      <p class="notification-empty">No notifications right now.</p>
+    } @else {
+      @for (notification of notifications(); track notification) {
+        <article>
+          <i class="pi pi-info-circle"></i>
+          <span>{{ notification }}</span>
+        </article>
+      }
+    }
+  </div>
+</p-drawer>

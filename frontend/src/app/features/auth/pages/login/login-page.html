@@ -1,0 +1,85 @@
+<app-auth-layout>
+  <div class="login">
+    <header class="login-head">
+      <h1>Sign in</h1>
+      <p>Welcome back. Enter your credentials to access the workspace.</p>
+    </header>
+
+    @if (errorMessage()) {
+      <div class="login-alert" role="alert">
+        <i class="pi pi-exclamation-circle"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input
+          pInputText
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="you@kprints.com"
+          autocomplete="email"
+          fluid
+        />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <small class="field-error">Enter a valid email address.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <p-password
+          inputId="password"
+          formControlName="password"
+          [feedback]="false"
+          [toggleMask]="true"
+          placeholder="Your password"
+          autocomplete="current-password"
+          fluid
+        />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <small class="field-error">Password is required.</small>
+        }
+      </div>
+
+      <div class="login-row">
+        <div class="remember">
+          <p-checkbox inputId="remember" formControlName="rememberMe" [binary]="true" />
+          <label for="remember">Remember me</label>
+        </div>
+        <a routerLink="/auth/forgot-password" class="forgot-link">Forgot password?</a>
+      </div>
+
+      <button
+        pButton
+        type="submit"
+        label="Sign in"
+        class="login-submit"
+        [loading]="submitting()"
+        [disabled]="submitting()"
+      ></button>
+    </form>
+
+    @if (googleOAuthEnabled) {
+      <div class="login-divider"><span>or</span></div>
+
+      <button
+        pButton
+        type="button"
+        label="Continue with Google"
+        icon="pi pi-google"
+        class="p-button-outlined login-google"
+        [loading]="googleLoading()"
+        [disabled]="googleLoading()"
+        (click)="signInWithGoogle()"
+      ></button>
+    }
+
+    <p class="login-foot">
+      Access is invite-only. Contact your administrator if you need an account.
+    </p>
+  </div>
+</app-auth-layout>

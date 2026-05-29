@@ -1,0 +1,54 @@
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 720;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    margin: 0;
+    color: var(--app-muted-strong);
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .inline-link {
+    color: var(--app-primary);
+    font-weight: 550;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.status-icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: var(--radius-lg);
+  font-size: 1.5rem;
+
+  &.tone-warning {
+    color: var(--app-warning);
+    background: var(--app-warning-soft);
+  }
+
+  &.tone-danger {
+    color: var(--app-danger);
+    background: var(--app-danger-soft);
+  }
+
+  &.tone-info {
+    color: var(--app-info);
+    background: var(--app-info-soft);
+  }
+}

@@ -1,0 +1,68 @@
+// ERP table styling — apply via styleClass="app-table"
+
+.app-table {
+  .p-datatable-header {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  .p-datatable-thead > tr > th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0.75rem 1rem;
+    background: var(--surface-2);
+    border-color: var(--border-subtle);
+    color: var(--app-muted-strong);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .p-datatable-tbody > tr {
+    transition: background var(--motion-fast) var(--ease-out);
+
+    > td {
+      padding: 0.85rem 1rem;
+      border-color: var(--border-subtle);
+      font-size: 0.9rem;
+    }
+
+    &:nth-child(even) {
+      background: color-mix(in srgb, var(--surface-2) 40%, transparent);
+    }
+
+    &:hover {
+      background: var(--surface-hover);
+    }
+  }
+
+  .p-paginator {
+    padding: var(--space-3) var(--space-4);
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .p-paginator-page,
+  .p-paginator-first,
+  .p-paginator-prev,
+  .p-paginator-next,
+  .p-paginator-last {
+    min-width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-sm);
+  }
+}
+
+.app-table-wrapper {
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+}
+
+.text-right {
+  text-align: right;
+}

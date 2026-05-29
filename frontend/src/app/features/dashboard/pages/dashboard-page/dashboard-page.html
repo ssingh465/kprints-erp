@@ -1,0 +1,243 @@
+<section class="dashboard page-enter">
+  <app-page-header title="KPrints ERP Dashboard" subtitle="Revenue, production, inventory, and delivery health.">
+    <app-period-selector actions (periodChange)="onPeriodChange()" />
+  </app-page-header>
+
+  <div class="kpi-grid">
+    <app-kpi-card
+      label="Revenue"
+      [value]="revenue()"
+      [currency]="true"
+      [trend]="kpiTrendRevenue()"
+      icon="pi pi-chart-line"
+      [loading]="loading()"
+      class="stagger-1"
+    />
+    <app-kpi-card
+      label="Orders"
+      [value]="orderCount()"
+      [trend]="kpiTrendOrders()"
+      icon="pi pi-shopping-bag"
+      tone="accent"
+      [loading]="loading()"
+      class="stagger-2"
+    />
+    <app-kpi-card
+      label="Pending print jobs"
+      [value]="pendingJobs()"
+      [delta]="kpiDeltaPendingJobs()"
+      deltaDirection="neutral"
+      icon="pi pi-print"
+      tone="warning"
+      [loading]="loading()"
+      [showProgress]="pendingJobs() > 0 && !loading()"
+      [progressValue]="pendingJobProgress()"
+      class="stagger-3"
+    />
+    <app-kpi-card
+      label="Inventory alerts"
+      [value]="inventoryAlerts()"
+      [trend]="kpiTrendInventory()"
+      icon="pi pi-exclamation-triangle"
+      tone="danger"
+      [loading]="loading()"
+      class="stagger-4"
+    />
+  </div>
+
+  <div class="dashboard-grid">
+    <section class="erp-panel app-card-hover chart-panel wide animate-slide-up">
+      <div class="panel-heading">
+        <div>
+          <h2>Monthly financial analytics</h2>
+          <p>Revenue and expense movement in INR ({{ periodLabel() }}).</p>
+        </div>
+      </div>
+      @if (loading()) {
+        <app-chart-panel-skeleton [showHeading]="false" chartHeight="300px" />
+      } @else {
+        <div class="chart-container">
+          <p-chart type="line" [data]="revenueChart()" [options]="lineChartOptions" />
+        </div>
+      }
+    </section>
+
+    <section class="erp-panel app-card-hover chart-panel animate-slide-up">
+      <div class="panel-heading">
+        <div>
+          <h2>Order volume</h2>
+          <p>Monthly order count ({{ periodLabel() }}).</p>
+        </div>
+      </div>
+      @if (loading()) {
+        <app-chart-panel-skeleton [showHeading]="false" chartHeight="300px" />
+      } @else {
+        <div class="chart-container">
+          <p-chart type="bar" [data]="orderChart()" [options]="barChartOptions" />
+        </div>
+      }
+    </section>
+
+    <section class="erp-panel section-card table-panel wide animate-slide-up">
+      <div class="panel-heading">
+        <div>
+          <h2>Recent orders</h2>
+          <p>Latest orders in {{ periodLabel() }}.</p>
+        </div>
+      </div>
+      @if (loading()) {
+        <app-table-panel-skeleton [rows]="6" [showToolbar]="false" />
+      } @else if (recentOrders().length === 0) {
+        <app-empty-state
+          icon="pi pi-shopping-bag"
+          title="No recent orders"
+          description="Orders for this period will appear here once customers start placing them."
+        />
+      } @else {
+        <div class="app-table-wrapper">
+          <p-table
+            [value]="recentOrders()"
+            [scrollable]="true"
+            scrollHeight="330px"
+            [tableStyle]="{ 'min-width': '760px' }"
+            styleClass="app-table p-datatable-sm"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Due</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-order>
+              <tr>
+                <td><strong>{{ order.orderNo }}</strong></td>
+                <td>{{ order.customerName }}</td>
+                <td>{{ order.type }}</td>
+                <td><app-status-chip [value]="order.status" /></td>
+                <td>{{ order.dueDate | date: 'dd MMM' }}</td>
+                <td class="text-right">{{ order.total | inr }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      }
+    </section>
+
+    <section class="erp-panel app-card-hover animate-slide-up">
+      <div class="panel-heading">
+        <div>
+          <h2>Production pipeline</h2>
+          <p>Active print jobs by stage.</p>
+        </div>
+      </div>
+      @if (loading()) {
+        <app-list-panel-skeleton [items]="5" />
+      } @else if (printJobs().length === 0) {
+        <app-empty-state
+          icon="pi pi-print"
+          title="No active jobs"
+          description="Production jobs will show here when orders enter the print queue."
+        />
+      } @else {
+        <div class="pipeline-list">
+          @for (job of printJobs(); track job.id) {
+            <article>
+              <div>
+                <strong>{{ job.jobNo }}</strong>
+                <span>{{ job.customerName }} · {{ job.size }}</span>
+              </div>
+              <app-status-chip [value]="job.stage" />
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="erp-panel app-card-hover animate-slide-up">
+      <div class="panel-heading">
+        <div>
+          <h2>Low stock alerts</h2>
+          <p>Consumables at or below reorder level.</p>
+        </div>
+      </div>
+      @if (loading()) {
+        <app-list-panel-skeleton [items]="4" [showProgress]="true" />
+      } @else if (lowStockItems().length === 0) {
+        <app-empty-state
+          icon="pi pi-box"
+          title="Stock levels healthy"
+          description="All inventory items are above their reorder thresholds."
+        />
+      } @else {
+        <div class="alert-list">
+          @for (item of lowStockItems(); track item.id) {
+            <article>
+              <div>
+                <strong>{{ item.name }}</strong>
+                <span>{{ item.quantity }} {{ item.unit }} available · reorder at {{ item.reorderLevel }}</span>
+              </div>
+              <p-progressbar [value]="stockPercent(item)" [showValue]="false" />
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="erp-panel app-card-hover animate-slide-up">
+      <div class="panel-heading">
+        <div>
+          <h2>Top-selling posters</h2>
+          <p>{{ salesColumnLabel() }}.</p>
+        </div>
+      </div>
+      @if (loading()) {
+        <app-list-panel-skeleton [items]="5" />
+      } @else if (topPosters().length === 0) {
+        <app-empty-state
+          icon="pi pi-images"
+          title="No sales data yet"
+          description="Top sellers will populate once catalog orders are recorded."
+        />
+      } @else {
+        <div class="poster-list">
+          @for (poster of topPosters(); track poster.id) {
+            <article>
+              <span>{{ poster.sku }}</span>
+              <strong>{{ poster.title }}</strong>
+              <em>{{ poster.soldThisMonth }} sold</em>
+            </article>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="erp-panel app-card-hover animate-slide-up">
+      <div class="panel-heading">
+        <div>
+          <h2>Activity timeline</h2>
+          <p>Recent operational signals.</p>
+        </div>
+      </div>
+      @if (loading()) {
+        <app-list-panel-skeleton [items]="4" />
+      } @else if (activityTimeline().length === 0) {
+        <app-empty-state
+          icon="pi pi-history"
+          title="No recent activity"
+          description="Operational updates will appear here as orders, production, and inventory events occur."
+        />
+      } @else {
+        <p-timeline [value]="activityTimeline()">
+          <ng-template pTemplate="content" let-event>
+            <strong>{{ event.status }}</strong>
+            <p class="text-caption">{{ event.detail }}</p>
+          </ng-template>
+        </p-timeline>
+      }
+    </section>
+  </div>
+</section>

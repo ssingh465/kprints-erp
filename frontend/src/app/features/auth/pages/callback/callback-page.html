@@ -1,0 +1,10 @@
+<div class="callback">
+  @if (error()) {
+    <i class="pi pi-exclamation-triangle callback-error-icon"></i>
+    <p>{{ error() }}</p>
+    <a routerLink="/auth/login">Back to sign in</a>
+  } @else {
+    <i class="pi pi-spin pi-spinner callback-spinner"></i>
+    <p>Completing sign-in…</p>
+  }
+</div>

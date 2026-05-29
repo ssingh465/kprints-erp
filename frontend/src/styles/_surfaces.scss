@@ -1,0 +1,177 @@
+// Card & surface system
+
+.erp-panel,
+.app-card,
+.section-card {
+  background: var(--surface-1);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out),
+    transform var(--motion-base) var(--ease-out);
+}
+
+.app-card-hover:hover,
+.stat-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.app-card {
+  padding: var(--space-5);
+}
+
+.app-card-hover {
+  @extend .app-card;
+  cursor: default;
+}
+
+.stat-card {
+  @extend .app-card;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, var(--app-primary), var(--app-accent));
+    opacity: 0;
+    transition: opacity var(--motion-base) var(--ease-out);
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+}
+
+.section-card {
+  padding: var(--space-5);
+}
+
+.glass-card {
+  background: color-mix(in srgb, var(--surface-1) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--card-border) 70%, transparent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(16px);
+}
+
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: var(--space-1) 0 0;
+    color: var(--app-muted);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+// Shared KPI row — prevents card clipping in grid layouts
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: stretch;
+  min-width: 0;
+
+  app-kpi-card {
+    display: block;
+    min-width: 0;
+    height: 100%;
+  }
+}
+
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.table-toolbar,
+.filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+
+  .search-field {
+    flex: 0 1 min(420px, 100%);
+    width: min(420px, 100%);
+    max-width: min(420px, 100%);
+  }
+
+  .filters,
+  .toolbar-actions,
+  .actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .filter-select,
+  .p-select.filter-select {
+    width: auto !important;
+    min-width: 190px;
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-toolbar,
+  .filter-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+
+    .search-field {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .filters,
+    .toolbar-actions,
+    .actions {
+      margin-left: 0;
+      justify-content: stretch;
+      width: 100%;
+    }
+  }
+}

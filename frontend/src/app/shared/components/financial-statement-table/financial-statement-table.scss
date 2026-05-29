@@ -1,0 +1,22 @@
+.financial-statement {
+  .sticky-col {
+    position: sticky;
+    left: 0;
+    background: var(--app-surface, #fff);
+    z-index: 1;
+  }
+
+  tr.emphasis td {
+    font-weight: 700;
+  }
+}
+
+.statement-error {
+  color: #b42318;
+  margin: 0;
+}
+
+.statement-loading {
+  margin: 0;
+}
+

@@ -1,0 +1,121 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Products / Posters Catalog</h1>
+      <p class="page-subtitle">Catalog with units sold in {{ periodLabel() }} (from order lines).</p>
+    </div>
+    <div class="header-actions">
+      <app-period-selector (periodChange)="onPeriodChange()" />
+      <button pButton type="button" icon="pi pi-plus" label="Add poster" (click)="openAddPoster()"></button>
+    </div>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" placeholder="Search SKU, title, category" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+      <button pButton type="button" icon="pi pi-tags" label="Manage tags" severity="secondary"></button>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <div class="app-table-wrapper">
+    <p-table [value]="filtered()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '900px' }" styleClass="app-table p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>SKU</th>
+          <th>Poster</th>
+          <th>Category</th>
+          <th>Size</th>
+          <th class="text-right">Price</th>
+          <th class="text-right">Stock</th>
+          <th class="text-right">{{ salesColumnLabel() }}</th>
+          <th>Status</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-poster>
+        <tr>
+          <td><strong>{{ poster.sku }}</strong></td>
+          <td>{{ poster.title }}</td>
+          <td>{{ poster.category }}</td>
+          <td>{{ poster.size }}</td>
+          <td class="text-right">{{ poster.price | inr }}</td>
+          <td class="text-right">{{ poster.stock }}</td>
+          <td class="text-right">{{ poster.soldThisMonth }}</td>
+          <td><app-status-chip [value]="poster.active ? 'Active' : 'Inactive'" /></td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    }
+  </section>
+</section>
+
+<!-- Add Poster Dialog -->
+<p-dialog
+  header="Add New Poster to Catalog"
+  [modal]="true"
+  [(visible)]="addPosterOpen"
+  [style]="{ width: 'min(500px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="p-3">
+    <form (ngSubmit)="savePoster()" #posterForm="ngForm">
+      <div class="flex flex-column gap-2 mb-3">
+        <label for="title" class="font-semibold text-sm">Poster Title</label>
+        <input pInputText id="title" name="title" [(ngModel)]="newPoster.title" required placeholder="e.g. Vintage Sci-Fi Art" class="w-full" />
+      </div>
+
+      <div class="grid flex-row gap-3 mb-3">
+        <div class="col flex flex-column gap-2">
+          <label for="sku" class="font-semibold text-sm">SKU / Code</label>
+          <input pInputText id="sku" name="sku" [(ngModel)]="newPoster.sku" required class="w-full" />
+        </div>
+        <div class="col flex flex-column gap-2">
+          <label for="category" class="text-label">Category</label>
+          <p-select
+            [options]="posterCategories"
+            [(ngModel)]="newPoster.category"
+            name="category"
+            inputId="category"
+            styleClass="w-full"
+          />
+        </div>
+      </div>
+
+      <div class="grid flex-row gap-3 mb-3">
+        <div class="col flex flex-column gap-2">
+          <label for="size" class="font-semibold text-sm">Default Size</label>
+          <input pInputText id="size" name="size" [(ngModel)]="newPoster.size" required placeholder="e.g. A3, 12x18" class="w-full" />
+        </div>
+        <div class="col flex flex-column gap-2">
+          <label for="price" class="font-semibold text-sm">Base Price (INR)</label>
+          <input pInputText id="price" name="price" type="number" min="1" [(ngModel)]="newPoster.price" required class="w-full" />
+        </div>
+      </div>
+
+      <div class="grid flex-row gap-3 mb-4">
+        <div class="col flex flex-column gap-2">
+          <label for="stock" class="font-semibold text-sm">Initial Stock Qty</label>
+          <input pInputText id="stock" name="stock" type="number" min="0" [(ngModel)]="newPoster.stock" required class="w-full" />
+        </div>
+        <div class="col flex flex-column gap-2 justify-content-center pt-4">
+          <div class="flex align-items-center gap-2">
+            <input type="checkbox" id="active" name="active" [(ngModel)]="newPoster.active" style="width: 18px; height: 18px; cursor: pointer;" />
+            <label for="active" class="font-semibold text-sm cursor-pointer">Active in Catalog</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-content-end gap-2 mt-4">
+        <button pButton type="button" label="Cancel" class="p-button-outlined p-button-secondary" (click)="addPosterOpen = false"></button>
+        <button pButton type="submit" label="Save Poster" [disabled]="!posterForm.valid" class="p-button-primary"></button>
+      </div>
+    </form>
+  </div>
+</p-dialog>
+

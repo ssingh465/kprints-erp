@@ -1,0 +1,13 @@
+<div class="list-panel-skeleton">
+  @for (item of itemIndices(); track item) {
+    <article class="list-panel-skeleton-item">
+      <div>
+        <p-skeleton width="55%" height="1rem" borderRadius="6px" />
+        <p-skeleton width="85%" height="0.85rem" borderRadius="6px" />
+      </div>
+      @if (showProgress) {
+        <p-skeleton width="100%" height="0.5rem" borderRadius="4px" />
+      }
+    </article>
+  }
+</div>

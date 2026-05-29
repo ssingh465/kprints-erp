@@ -1,0 +1,59 @@
+.invite {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  align-items: flex-start;
+}
+
+.invite-icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  color: var(--app-primary);
+  background: var(--app-primary-soft);
+  border-radius: var(--radius-lg);
+  font-size: 1.5rem;
+
+  &--ok {
+    color: var(--app-success, #16a34a);
+    background: color-mix(in srgb, var(--app-success, #16a34a) 12%, transparent);
+  }
+
+  &--warn {
+    color: var(--app-danger);
+    background: var(--app-danger-soft);
+  }
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 740;
+  letter-spacing: -0.02em;
+}
+
+p {
+  margin: 0;
+  color: var(--app-muted-strong);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.invite-hint {
+  color: var(--app-muted);
+  font-size: 0.88rem;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--app-primary);
+  font-size: 0.88rem;
+  font-weight: 550;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

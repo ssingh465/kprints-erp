@@ -1,0 +1,64 @@
+.reports-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.report-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--app-primary), transparent 60%);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--app-primary), transparent 90%);
+  }
+
+  i {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    color: var(--app-primary);
+    background: color-mix(in srgb, var(--app-primary), transparent 88%);
+    border-radius: 8px;
+  }
+
+  strong,
+  p {
+    display: block;
+    margin: 0;
+  }
+
+  p {
+    margin-top: 0.25rem;
+    color: var(--app-muted);
+    font-size: 0.86rem;
+  }
+
+  .card-arrow {
+    color: var(--app-muted);
+  }
+}
+
+@media (max-width: 1000px) {
+  .report-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,44 @@
+@if (error) {
+  <p class="statement-error">{{ error }}</p>
+} @else if (loading) {
+  <app-table-panel-skeleton [rows]="10" [showToolbar]="false" />
+} @else if (rows.length === 0) {
+  <p class="muted">No data available for this period.</p>
+} @else {
+  <p-table
+    [value]="rows"
+    [scrollable]="true"
+    [tableStyle]="{ 'min-width': '860px' }"
+    styleClass="p-datatable-sm financial-statement"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th class="sticky-col">Metric</th>
+        @for (period of periods; track period) {
+          <th class="text-right">{{ period }}</th>
+        }
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-row>
+      <tr [class.emphasis]="row.emphasis">
+        <td class="sticky-col">
+          <strong>{{ row.label }}</strong>
+        </td>
+        @for (val of row.values; track $index) {
+          <td class="text-right">
+            @if (row.format === 'amount') {
+              @if (val === null || val === undefined) {
+                —
+              } @else {
+                {{ val | inr }}
+              }
+            } @else {
+              {{ percent(val) }}
+            }
+          </td>
+        }
+      </tr>
+    </ng-template>
+  </p-table>
+}

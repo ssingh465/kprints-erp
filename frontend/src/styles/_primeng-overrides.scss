@@ -1,0 +1,69 @@
+// PrimeNG component refinements
+
+.p-component {
+  font-family: inherit;
+}
+
+.p-dialog {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--card-border);
+}
+
+.p-dialog-header {
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.p-dialog-content {
+  padding: var(--space-5);
+}
+
+.p-drawer {
+  border-left: 1px solid var(--card-border);
+}
+
+.p-tag {
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.p-progressbar {
+  // Height is set via LaraIndigo preset in app.config.ts (PrimeNG injects styles at runtime).
+  border-radius: var(--radius-full);
+  background: var(--surface-3);
+
+  .p-progressbar-value {
+    border-radius: var(--radius-full);
+    background: linear-gradient(90deg, var(--app-primary), var(--app-accent));
+  }
+}
+
+.p-timeline-event-opposite {
+  display: none;
+}
+
+.p-chart canvas {
+  border-radius: var(--radius-sm);
+}
+
+.p-skeleton {
+  background: var(--surface-2);
+}
+
+.p-tooltip {
+  font-size: 0.8125rem;
+}
+
+// Dialogs/drawers append to body (see overlayAppendTo in app.config.ts)
+.p-dialog-mask,
+.p-drawer-mask {
+  z-index: 1100;
+}
+
+// Ensure select/dropdown overlays render above cards and panels
+.p-select-overlay,
+.p-component-overlay.p-select-overlay {
+  z-index: 1100 !important;
+}

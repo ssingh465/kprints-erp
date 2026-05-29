@@ -1,0 +1,332 @@
+<section class="finance-page page-enter">
+  <app-page-header
+    title="Finance"
+    [subtitle]="'Revenue, expenses, charts, and partner distribution for ' + periodLabel() + '.'"
+  >
+    <app-period-selector actions (periodChange)="onPeriodChange()" />
+    <button
+      actions
+      pButton
+      type="button"
+      icon="pi pi-plus"
+      label="Add partner"
+      (click)="openPartnerDialog()"
+    ></button>
+    <button
+      actions
+      pButton
+      type="button"
+      icon="pi pi-wallet"
+      label="Record investment"
+      severity="secondary"
+      (click)="openInvestmentDialog()"
+      [disabled]="partners().length === 0"
+    ></button>
+  </app-page-header>
+
+  @if (summaryError()) {
+    <p-message severity="error" [text]="summaryError()!" />
+  }
+
+  <div class="kpi-grid">
+    <app-kpi-card label="Gross revenue" [value]="revenue()" [currency]="true" icon="pi pi-indian-rupee" [loading]="summaryLoading()" />
+    <app-kpi-card label="Collected" [value]="paid()" [currency]="true" icon="pi pi-wallet" tone="success" [loading]="summaryLoading()" />
+    <app-kpi-card label="Expenses" [value]="expenseTotal()" [currency]="true" icon="pi pi-receipt" tone="warning" [loading]="summaryLoading()" />
+    <app-kpi-card label="Net profit" [value]="profit()" [currency]="true" icon="pi pi-chart-line" tone="accent" [loading]="summaryLoading()" />
+  </div>
+
+  @if (partnersError()) {
+    <p-message severity="error" [text]="partnersError()!" />
+  }
+
+  <section class="erp-panel partners-panel">
+    <div class="panel-heading">
+      <h2>Partners</h2>
+      <span class="share-total" [class.invalid]="!sharesValid()">
+        Profit shares: {{ totalSharePercent() | number: '1.0-2' }}%
+        @if (!sharesValid()) {
+          <small>(must equal 100% to distribute)</small>
+        }
+      </span>
+    </div>
+
+    @if (partnersLoading()) {
+      <app-table-panel-skeleton [rows]="5" [showToolbar]="false" />
+    } @else if (partners().length === 0) {
+      <p class="muted">No partners yet. Add partners and investments; profit shares must total 100% to calculate distribution.</p>
+    } @else {
+      @if (distribution(); as dist) {
+        <p class="distribution-note">
+          Based on net profit (revenue − operating expenses). Partner capital is shown separately and is not
+          counted as an operating expense.
+        </p>
+        @if (!dist.sharesValid) {
+          <p-message
+            severity="warn"
+            text="Partner profit shares must total 100% before amounts are calculated."
+          />
+        } @else if (dist.netProfit < 0) {
+          <p-message severity="info" text="Net profit is negative; distribution amounts are ₹0." />
+        }
+      }
+
+      <div class="app-table-wrapper">
+      <p-table
+        [value]="partnerTableRows()"
+        dataKey="id"
+        [scrollable]="true"
+        [tableStyle]="{ 'min-width': '720px' }"
+        styleClass="app-table p-datatable-sm partners-table"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th class="expand-col" aria-label="Expand investments"></th>
+            <th>Partner</th>
+            <th class="text-right">Profit share</th>
+            <th class="text-right">Invested</th>
+            <th class="text-right">Distribution</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row let-expanded="expanded">
+          <tr>
+            <td class="expand-col">
+              <button
+                pButton
+                type="button"
+                [pRowToggler]="row"
+                [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+                class="p-button-text p-button-rounded row-expand-toggle"
+                [attr.aria-expanded]="expanded"
+                [attr.aria-label]="'Toggle investments for ' + row.partner.name"
+              ></button>
+            </td>
+            <td><strong>{{ row.partner.name }}</strong></td>
+            <td class="text-right">{{ row.partner.profitSharePercent }}%</td>
+            <td class="text-right">{{ row.partner.totalInvested | inr }}</td>
+            <td class="text-right">{{ row.distributionAmount | inr }}</td>
+            <td class="row-actions">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-text"
+                aria-label="Edit partner"
+                (click)="openPartnerDialog(row.partner)"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
+                class="p-button-text"
+                aria-label="Add investment"
+                (click)="openInvestmentDialog(row.partner)"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-text p-button-danger"
+                aria-label="Delete partner"
+                (click)="deletePartner(row.partner)"
+              ></button>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="expandedrow" let-row>
+          <tr class="partner-investments-row">
+            <td colspan="6">
+              <div class="partner-investments-panel">
+                <p class="partner-investments-heading">Investments</p>
+                @if (row.partner.investments.length === 0) {
+                  <p class="muted partner-investments-empty">No investments recorded yet.</p>
+                } @else {
+                  <p-table
+                    [value]="row.partner.investments"
+                    styleClass="app-table p-datatable-sm partner-investments-table"
+                  >
+                    <ng-template pTemplate="header">
+                      <tr>
+                        <th>Date</th>
+                        <th class="text-right">Amount</th>
+                        <th>Notes</th>
+                        <th></th>
+                      </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-investment>
+                      <tr>
+                        <td>{{ investment.date | date: 'dd MMM yyyy' }}</td>
+                        <td class="text-right">{{ investment.amount | inr }}</td>
+                        <td>{{ investment.notes || '—' }}</td>
+                        <td>
+                          <button
+                            pButton
+                            type="button"
+                            icon="pi pi-trash"
+                            class="p-button-text p-button-danger"
+                            aria-label="Delete investment"
+                            (click)="deleteInvestment(row.partner.id, investment.id)"
+                          ></button>
+                        </td>
+                      </tr>
+                    </ng-template>
+                  </p-table>
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        @if (distribution(); as dist) {
+          <ng-template pTemplate="footer">
+            <tr>
+              <td></td>
+              <td colspan="3"><strong>Distributable profit</strong></td>
+              <td class="text-right"><strong>{{ dist.distributableProfit | inr }}</strong></td>
+              <td></td>
+            </tr>
+          </ng-template>
+        }
+      </p-table>
+      </div>
+    }
+  </section>
+
+  <div class="finance-grid">
+    <section class="erp-panel chart-panel">
+      <h2>Profit &amp; loss trend</h2>
+      <p class="chart-period-note">{{ periodLabel() }}</p>
+      @if (chartsLoading()) {
+        <app-chart-panel-skeleton [showHeading]="false" chartHeight="220px" />
+      } @else {
+        <p-chart type="bar" [data]="pnlChart()" [options]="chartOptions" />
+      }
+    </section>
+
+    <section class="erp-panel">
+      <h2>Recent expenses</h2>
+      <p class="chart-period-note">{{ periodLabel() }}</p>
+      @if (expensesLoading()) {
+        <app-table-panel-skeleton [rows]="6" [showToolbar]="false" />
+      } @else {
+      <div class="app-table-wrapper">
+      <p-table [value]="expenses()" [tableStyle]="{ 'min-width': '620px' }" [scrollable]="true" styleClass="app-table p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Vendor</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-expense>
+          <tr>
+            <td>{{ expense.date | date: 'dd MMM' }}</td>
+            <td>{{ expense.category }}</td>
+            <td>{{ expense.vendor }}</td>
+            <td class="text-right">{{ expense.amount | inr }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+      </div>
+      }
+    </section>
+  </div>
+</section>
+
+<p-dialog
+  [header]="editingPartnerId ? 'Edit partner' : 'Add partner'"
+  [modal]="true"
+  [(visible)]="partnerDialogOpen"
+  [style]="{ width: 'min(480px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="dialog-body">
+    @if (formError()) {
+      <p-message severity="error" [text]="formError()!" />
+    }
+    <form (ngSubmit)="savePartner()" #partnerFormRef="ngForm">
+      <div class="field">
+        <label for="partnerName">Partner name</label>
+        <input pInputText id="partnerName" name="partnerName" [(ngModel)]="partnerForm.name" required class="w-full" />
+      </div>
+      <div class="field">
+        <label for="profitShare">Profit share (%)</label>
+        <input
+          pInputText
+          id="profitShare"
+          name="profitShare"
+          type="number"
+          min="0"
+          max="100"
+          step="0.01"
+          [(ngModel)]="partnerForm.profitSharePercent"
+          required
+          class="w-full"
+        />
+        <small class="hint">
+          Shares cannot exceed 100% combined. Totals below 100% are fine until all partners are added; profit
+          distribution requires exactly 100%.
+        </small>
+      </div>
+      <div class="dialog-actions">
+        <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="partnerDialogOpen = false"></button>
+        <button pButton type="submit" label="Save partner" [disabled]="!partnerFormRef.valid"></button>
+      </div>
+    </form>
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="Record investment"
+  [modal]="true"
+  [(visible)]="investmentDialogOpen"
+  [style]="{ width: 'min(480px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="dialog-body">
+    @if (formError()) {
+      <p-message severity="error" [text]="formError()!" />
+    }
+    <form (ngSubmit)="saveInvestment()" #investmentFormRef="ngForm">
+      <div class="field">
+        <label for="invPartner">Partner</label>
+        <p-select
+          [options]="partnerOptions()"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="investmentForm.partnerId"
+          name="invPartner"
+          inputId="invPartner"
+          styleClass="w-full"
+        />
+      </div>
+      <div class="field">
+        <label for="invAmount">Amount (INR)</label>
+        <input
+          pInputText
+          id="invAmount"
+          name="invAmount"
+          type="number"
+          min="1"
+          [(ngModel)]="investmentForm.amount"
+          required
+          class="w-full"
+        />
+      </div>
+      <div class="field">
+        <label for="invDate">Investment date</label>
+        <input pInputText id="invDate" name="invDate" type="date" [(ngModel)]="investmentForm.date" required class="w-full" />
+      </div>
+      <div class="field">
+        <label for="invNotes">Notes (optional)</label>
+        <input pInputText id="invNotes" name="invNotes" [(ngModel)]="investmentForm.notes" class="w-full" />
+      </div>
+      <div class="dialog-actions">
+        <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="investmentDialogOpen = false"></button>
+        <button pButton type="submit" label="Save investment" [disabled]="!investmentFormRef.valid"></button>
+      </div>
+    </form>
+  </div>
+</p-dialog>

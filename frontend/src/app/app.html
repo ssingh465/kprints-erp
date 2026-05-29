@@ -1,0 +1,10 @@
+<p-toast position="top-right" />
+
+@if (session.status() === AuthStatus.Initializing) {
+  <div class="auth-init-overlay" aria-live="polite" aria-busy="true">
+    <p-progressSpinner strokeWidth="4" ariaLabel="Loading session" />
+    <p>Loading session…</p>
+  </div>
+}
+
+<router-outlet />

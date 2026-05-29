@@ -1,0 +1,101 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Customers</h1>
+      <p class="page-subtitle">Unified offline, website, and marketplace customer records.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-user-plus" label="Add customer" (click)="openAddCustomer()"></button>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" placeholder="Search customers" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+      <button pButton type="button" icon="pi pi-download" label="Export" severity="secondary"></button>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <div class="app-table-wrapper">
+    <p-table [value]="filtered()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '820px' }" styleClass="app-table p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>City</th>
+          <th>Source</th>
+          <th class="text-right">Orders</th>
+          <th class="text-right">Lifetime value</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-customer>
+        <tr>
+          <td><strong>{{ customer.name }}</strong></td>
+          <td>{{ customer.phone }}</td>
+          <td>{{ customer.email }}</td>
+          <td>{{ customer.city }}</td>
+          <td><app-status-chip [value]="customer.source" /></td>
+          <td class="text-right">{{ customer.orderCount }}</td>
+          <td class="text-right">{{ customer.lifetimeValue | inr }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    }
+  </section>
+</section>
+
+<!-- Add Customer Dialog -->
+<p-dialog
+  header="Add New Customer"
+  [modal]="true"
+  [(visible)]="addCustomerOpen"
+  [style]="{ width: 'min(500px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="p-3">
+    <form (ngSubmit)="saveCustomer()" #customerForm="ngForm">
+      <div class="flex flex-column gap-2 mb-3">
+        <label for="name" class="font-semibold text-sm">Full Name</label>
+        <input pInputText id="name" name="name" [(ngModel)]="newCustomer.name" required placeholder="e.g. Rahul Sharma" class="w-full" />
+      </div>
+      
+      <div class="flex flex-column gap-2 mb-3">
+        <label for="phone" class="font-semibold text-sm">Phone Number</label>
+        <input pInputText id="phone" name="phone" [(ngModel)]="newCustomer.phone" required placeholder="e.g. +91 98765 43210" class="w-full" />
+      </div>
+
+      <div class="flex flex-column gap-2 mb-3">
+        <label for="email" class="font-semibold text-sm">Email Address</label>
+        <input pInputText id="email" name="email" type="email" [(ngModel)]="newCustomer.email" required placeholder="e.g. rahul@example.com" class="w-full" />
+      </div>
+
+      <div class="flex flex-column gap-2 mb-3">
+        <label for="city" class="font-semibold text-sm">City</label>
+        <input pInputText id="city" name="city" [(ngModel)]="newCustomer.city" required placeholder="e.g. New Delhi" class="w-full" />
+      </div>
+
+      <div class="flex flex-column gap-2 mb-4">
+        <label for="source" class="text-label">Order Source / Channel</label>
+        <p-select
+          [options]="customerSources"
+          [(ngModel)]="newCustomer.source"
+          name="source"
+          inputId="source"
+          styleClass="w-full"
+        />
+      </div>
+
+      <div class="flex justify-content-end gap-2 mt-4">
+        <button pButton type="button" label="Cancel" class="p-button-outlined p-button-secondary" (click)="addCustomerOpen = false"></button>
+        <button pButton type="submit" label="Save Customer" [disabled]="!customerForm.valid" class="p-button-primary"></button>
+      </div>
+    </form>
+  </div>
+</p-dialog>
+

@@ -1,0 +1,46 @@
+<app-auth-layout>
+  <div class="invite">
+    @switch (state()) {
+      @case ('loading') {
+        <span class="invite-icon"><i class="pi pi-spin pi-spinner"></i></span>
+        <h1>Checking invitation…</h1>
+        <p>Please wait while we verify your invite link.</p>
+      }
+      @case ('valid') {
+        <span class="invite-icon invite-icon--ok"><i class="pi pi-envelope"></i></span>
+        <h1>You're invited</h1>
+        <p>
+          You've been invited to join KPrints ERP
+          @if (email()) {
+            as <strong>{{ email() }}</strong>
+          }
+          .
+        </p>
+        @if (roleLabel()) {
+          <p-tag [value]="roleLabel()!" severity="info" [rounded]="true" />
+        }
+        <p class="invite-hint">
+          Open the invitation link in your email to set your password and complete signup.
+          After that, an administrator will approve your account.
+        </p>
+        <button pButton type="button" label="Go to sign in" (click)="goToLogin()"></button>
+      }
+      @case ('expired') {
+        <span class="invite-icon invite-icon--warn"><i class="pi pi-clock"></i></span>
+        <h1>Invitation expired</h1>
+        <p>{{ message() }}</p>
+        <a routerLink="/auth/login" class="back-link">
+          <i class="pi pi-arrow-left"></i> Back to sign in
+        </a>
+      }
+      @default {
+        <span class="invite-icon invite-icon--warn"><i class="pi pi-times-circle"></i></span>
+        <h1>Invalid invitation</h1>
+        <p>{{ message() }}</p>
+        <a routerLink="/auth/login" class="back-link">
+          <i class="pi pi-arrow-left"></i> Back to sign in
+        </a>
+      }
+    }
+  </div>
+</app-auth-layout>

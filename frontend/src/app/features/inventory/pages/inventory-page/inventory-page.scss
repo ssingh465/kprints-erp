@@ -1,0 +1,92 @@
+.operation-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.table-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.filter-select {
+  padding: 0.5rem;
+  border: 1px solid var(--app-border);
+  border-radius: 6px;
+  background: var(--app-surface);
+  width: 100%;
+}
+
+.actions-end {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.form-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--app-muted);
+
+  &.warn {
+    color: var(--p-red-500, #ef4444);
+  }
+
+  a {
+    color: var(--p-primary-color);
+  }
+}
+
+.empty-message {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--app-muted);
+}
+
+.empty-hint {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.erp-panel {
+  padding: 1rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+@media (max-width: 760px) {
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

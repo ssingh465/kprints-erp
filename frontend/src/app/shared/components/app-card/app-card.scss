@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+.app-card-host {
+  background: var(--surface-1);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+  transition:
+    box-shadow var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out),
+    transform var(--motion-base) var(--ease-out);
+}
+
+.app-card-host.no-padding {
+  padding: 0;
+}
+
+.app-card-host.no-padding .panel-heading {
+  padding: var(--space-5);
+  padding-bottom: 0;
+  margin-bottom: 0;
+}

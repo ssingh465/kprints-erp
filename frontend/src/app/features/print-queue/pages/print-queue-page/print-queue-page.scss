@@ -1,0 +1,33 @@
+.operation-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.erp-panel {
+  padding: 1rem;
+}
+
+.table-toolbar {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  min-width: 180px;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.25rem;
+  white-space: nowrap;
+}

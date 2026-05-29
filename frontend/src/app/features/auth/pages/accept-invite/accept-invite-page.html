@@ -1,0 +1,112 @@
+<app-auth-layout>
+  <div class="accept-invite">
+    @switch (state()) {
+      @case ('loading') {
+        <span class="accept-icon"><i class="pi pi-spin pi-spinner"></i></span>
+        <h1>Verifying invitation…</h1>
+        <p>Please wait while we confirm your invite link.</p>
+      }
+      @case ('setup') {
+        <header class="accept-head">
+          <h1>Complete your account</h1>
+          <p>
+            Set your name and password for KPrints ERP
+            @if (email()) {
+              (<strong>{{ email() }}</strong>)
+            }
+            .
+          </p>
+        </header>
+
+        @if (roleLabel()) {
+          <p-tag [value]="roleLabel()!" severity="info" [rounded]="true" />
+        }
+
+        @if (errorMessage()) {
+          <div class="accept-alert" role="alert">
+            <i class="pi pi-exclamation-circle"></i>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="field">
+            <label for="fullName">Full name</label>
+            <input
+              pInputText
+              id="fullName"
+              type="text"
+              formControlName="fullName"
+              placeholder="Jane Doe"
+              autocomplete="name"
+              fluid
+              (blur)="onFullNameBlur()"
+            />
+            @if (form.controls.fullName.touched && form.controls.fullName.errors?.['required']) {
+              <small class="field-error">Full name is required.</small>
+            }
+            @if (form.controls.fullName.touched && form.controls.fullName.errors?.['alphabeticOnly']) {
+              <small class="field-error">Use letters only (A–Z), with spaces between words.</small>
+            }
+            @if (form.controls.fullName.touched && form.controls.fullName.errors?.['properCase']) {
+              <small class="field-error">Capitalize each word (e.g. Jane Doe).</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <p-password
+              inputId="password"
+              formControlName="password"
+              [toggleMask]="true"
+              [feedback]="true"
+              placeholder="At least 8 characters"
+              autocomplete="new-password"
+              fluid
+            />
+            @if (form.controls.password.touched && form.controls.password.invalid) {
+              <small class="field-error">Password must be at least 8 characters.</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="confirmPassword">Confirm password</label>
+            <p-password
+              inputId="confirmPassword"
+              formControlName="confirmPassword"
+              [toggleMask]="true"
+              [feedback]="false"
+              placeholder="Re-enter your password"
+              autocomplete="new-password"
+              fluid
+            />
+            @if (form.touched && form.errors?.['mismatch']) {
+              <small class="field-error">Passwords do not match.</small>
+            }
+          </div>
+
+          <button
+            pButton
+            type="submit"
+            label="Create account"
+            class="accept-submit"
+            [loading]="submitting()"
+            [disabled]="submitting()"
+          ></button>
+        </form>
+
+        <p class="accept-hint">
+          After setup, your account will await administrator approval before you can access the ERP.
+        </p>
+      }
+      @default {
+        <span class="accept-icon accept-icon--warn"><i class="pi pi-times-circle"></i></span>
+        <h1>Invitation problem</h1>
+        <p>{{ errorMessage() }}</p>
+        <a routerLink="/auth/login" class="back-link">
+          <i class="pi pi-arrow-left"></i> Back to sign in
+        </a>
+      }
+    }
+  </div>
+</app-auth-layout>

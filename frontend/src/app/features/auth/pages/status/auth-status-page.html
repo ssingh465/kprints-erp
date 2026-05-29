@@ -1,0 +1,28 @@
+<app-auth-layout>
+  <div class="status">
+    <span class="status-icon" [class]="'tone-' + config.iconTone">
+      <i [class]="config.icon"></i>
+    </span>
+    <h1>{{ config.title }}</h1>
+    <p>
+      @if (messageParts; as parts) {
+        {{ parts.before
+        }}<a [routerLink]="parts.route" class="inline-link">{{ parts.linkText }}</a
+        >{{ parts.after }}
+      } @else {
+        {{ config.message }}
+      }
+    </p>
+
+    @if (config.showSignOut) {
+      <button
+        pButton
+        type="button"
+        label="Sign out"
+        class="p-button-outlined"
+        [loading]="signingOut()"
+        (click)="signOut()"
+      ></button>
+    }
+  </div>
+</app-auth-layout>

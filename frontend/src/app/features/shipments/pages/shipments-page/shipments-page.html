@@ -1,0 +1,90 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Shipments</h1>
+      <p class="page-subtitle">Track carrier pickups, delivery ETAs, and shipment status.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-plus" label="New shipment" (click)="openCreate()"></button>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" placeholder="Search shipments" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+    <div class="app-table-wrapper">
+    <p-table [value]="filtered()" [paginator]="true" [rows]="8" [scrollable]="true" [tableStyle]="{ 'min-width': '900px' }" styleClass="app-table p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Tracking</th>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Carrier</th>
+          <th>City</th>
+          <th>Status</th>
+          <th>ETA</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td><strong>{{ row.trackingNo }}</strong></td>
+          <td>{{ row.orderNo }}</td>
+          <td>{{ row.customerName }}</td>
+          <td>{{ row.carrier }}</td>
+          <td>{{ row.city }}</td>
+          <td><app-status-chip [value]="row.status" /></td>
+          <td>{{ row.eta | date: 'mediumDate' }}</td>
+          <td>
+            <button pButton type="button" icon="pi pi-pencil" class="p-button-text" label="Status" (click)="openStatus(row)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    }
+  </section>
+</section>
+
+<p-dialog header="New shipment" [modal]="true" [(visible)]="createOpen" [style]="{ width: 'min(500px, 95vw)' }">
+  <form (ngSubmit)="saveShipment()" #form="ngForm" class="p-3">
+    <div class="field"><label>Order number</label><input pInputText name="orderNo" [(ngModel)]="newShipment.orderNo" required class="w-full" /></div>
+    <div class="field"><label>Customer</label><input pInputText name="customerName" [(ngModel)]="newShipment.customerName" required class="w-full" /></div>
+    <div class="field"><label>Carrier</label>
+      <p-select
+        [options]="carriers"
+        [(ngModel)]="newShipment.carrier"
+        name="carrier"
+        styleClass="w-full"
+      />
+    </div>
+    <div class="field"><label>Tracking number</label><input pInputText name="trackingNo" [(ngModel)]="newShipment.trackingNo" required class="w-full" /></div>
+    <div class="field"><label>City</label><input pInputText name="city" [(ngModel)]="newShipment.city" required class="w-full" /></div>
+    <div class="field"><label>ETA</label><input pInputText type="date" name="eta" [(ngModel)]="newShipment.eta" required class="w-full" /></div>
+    <div class="actions-end">
+      <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="createOpen = false"></button>
+      <button pButton type="submit" label="Save" [disabled]="!form.valid"></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog header="Update status" [modal]="true" [(visible)]="statusDialogOpen" [style]="{ width: 'min(400px, 95vw)' }">
+  <form (ngSubmit)="saveStatus()" class="p-3">
+    <p-select
+      [options]="shipmentStatuses"
+      [(ngModel)]="newStatus"
+      name="newStatus"
+      styleClass="w-full mb-4"
+    />
+    <div class="actions-end">
+      <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="statusDialogOpen = false"></button>
+      <button pButton type="submit" label="Save"></button>
+    </div>
+  </form>
+</p-dialog>

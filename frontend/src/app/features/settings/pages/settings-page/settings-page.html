@@ -1,0 +1,167 @@
+<section class="settings-page">
+  <div>
+    <h1 class="page-title">Settings</h1>
+    <p class="page-subtitle">Load demo data or start fresh when you first connect the backend.</p>
+  </div>
+
+  <div class="database-section">
+    <div class="section-header">
+      <h2>Database</h2>
+      @if (statusLoading()) {
+        <p-tag severity="secondary" value="Checking status…" />
+      } @else if (statusError(); as err) {
+        <p-tag severity="danger" [value]="err" />
+      } @else if (setupStatus(); as status) {
+        @if (!status.setupCompleted) {
+          <p-tag severity="warn" value="Not initialized" />
+        } @else if (status.demoMode) {
+          <p-tag severity="info" value="Demo mode" />
+        } @else {
+          <p-tag severity="success" value="Fresh (blank)" />
+        }
+      }
+    </div>
+
+    @if (statusError()) {
+      <div class="erp-panel status-panel">
+        <div>
+          <strong>Backend unavailable</strong>
+          <p>Start the API server and confirm <code>backend/.env</code> has a valid <code>DATABASE_URL</code>, then retry.</p>
+        </div>
+        <button pButton type="button" icon="pi pi-refresh" label="Retry" (click)="refreshSetupStatus()"></button>
+      </div>
+    } @else if (statusLoading()) {
+      <app-settings-card-skeleton />
+      <app-settings-card-skeleton />
+    } @else {
+      <article class="erp-panel">
+        <div>
+          <strong>Load demo data</strong>
+          <p>
+            Wipes the database and seeds a linked demo for the last two quarters: customers, catalog, inventory,
+            orders, production, shipments, finance, and coupons — enough to explore every screen.
+          </p>
+        </div>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-sparkles"
+          label="Load demo data"
+          (click)="openLoadDemoDialog()"
+          [disabled]="statusLoading()"
+        ></button>
+      </article>
+
+      <article class="erp-panel">
+        <div>
+          <strong>Start fresh (blank)</strong>
+          <p>Clears all transactional data and keeps only empty company settings. Use before going live with real data.</p>
+        </div>
+        <button
+          pButton
+          type="button"
+          icon="pi pi-plus-circle"
+          label="Start fresh"
+          class="p-button-outlined"
+          (click)="openStartFreshDialog()"
+          [disabled]="statusLoading()"
+        ></button>
+      </article>
+    }
+  </div>
+</section>
+
+<p-dialog
+  header="Load demo data"
+  [modal]="true"
+  [(visible)]="showDemoDialog"
+  [style]="{ width: 'min(480px, 90vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="p-3">
+    <div class="text-center mb-4">
+      <i class="pi pi-sparkles text-primary text-5xl mb-3 block"></i>
+      <h3 class="text-lg font-bold">Load demo data?</h3>
+      <p class="text-sm text-gray-500 mt-2">
+        This will permanently delete all current data in your database and replace it with seeded demo content,
+        including two quarters of chart history.
+      </p>
+      <p class="text-xs text-red-600 font-semibold mt-2">This action cannot be undone.</p>
+    </div>
+
+    @if (actionError) {
+      <div class="p-3 mb-3 border-round bg-red-50 text-red-700 text-xs flex align-items-center gap-2 border-left-3 border-red-500">
+        <i class="pi pi-times-circle text-sm flex-shrink-0"></i>
+        <span>{{ actionError }}</span>
+      </div>
+    }
+
+    <div class="flex justify-content-end gap-2 mt-4">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        class="p-button-outlined p-button-secondary"
+        (click)="showDemoDialog = false"
+        [disabled]="loadingDemo"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Load demo data"
+        icon="pi pi-sparkles"
+        (click)="loadDemoData()"
+        [disabled]="loadingDemo"
+        [loading]="loadingDemo"
+      ></button>
+    </div>
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="Start fresh (blank)"
+  [modal]="true"
+  [(visible)]="showFreshDialog"
+  [style]="{ width: 'min(480px, 90vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="p-3">
+    <div class="text-center mb-4">
+      <i class="pi pi-exclamation-triangle text-red-600 text-5xl mb-3 block"></i>
+      <h3 class="text-lg font-bold">Wipe database and start blank?</h3>
+      <p class="text-sm text-gray-500 mt-2">
+        This will permanently delete all customers, posters, orders, print jobs, inventory, shipments, and expenses.
+      </p>
+      <p class="text-xs text-red-600 font-semibold mt-2">This action cannot be undone.</p>
+    </div>
+
+    @if (actionError) {
+      <div class="p-3 mb-3 border-round bg-red-50 text-red-700 text-xs flex align-items-center gap-2 border-left-3 border-red-500">
+        <i class="pi pi-times-circle text-sm flex-shrink-0"></i>
+        <span>{{ actionError }}</span>
+      </div>
+    }
+
+    <div class="flex justify-content-end gap-2 mt-4">
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        class="p-button-outlined p-button-secondary"
+        (click)="showFreshDialog = false"
+        [disabled]="loadingFresh"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Start fresh"
+        severity="danger"
+        [icon]="loadingFresh ? 'pi pi-spin pi-cog' : 'pi pi-trash'"
+        (click)="startFresh()"
+        [disabled]="loadingFresh"
+      ></button>
+    </div>
+  </div>
+</p-dialog>

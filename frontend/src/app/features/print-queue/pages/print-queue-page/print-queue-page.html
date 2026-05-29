@@ -1,0 +1,104 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Print Queue</h1>
+      <p class="page-subtitle">Active print jobs, stage progression, and operator assignments.</p>
+    </div>
+  </div>
+
+  <section class="erp-panel">
+    <div class="table-toolbar">
+      <label class="search-field">
+        <i class="pi pi-search" aria-hidden="true"></i>
+        <input pInputText type="search" placeholder="Search jobs" [value]="search()" (input)="search.set($any($event.target).value)" />
+      </label>
+      <div class="filters">
+        <p-select
+          [options]="stages"
+          [ngModel]="stageFilter()"
+          (ngModelChange)="stageFilter.set($event)"
+          styleClass="filter-select"
+        />
+      </div>
+    </div>
+
+    @if (loading()) {
+      <app-table-panel-skeleton [rows]="10" />
+    } @else {
+    <div class="app-table-wrapper">
+    <p-table [value]="filtered()" [paginator]="true" [rows]="10" [scrollable]="true" [tableStyle]="{ 'min-width': '960px' }" styleClass="app-table p-datatable-sm">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Job</th>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Stage</th>
+          <th>Priority</th>
+          <th>Material</th>
+          <th>Operator</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-job>
+        <tr>
+          <td><strong>{{ job.jobNo }}</strong></td>
+          <td>{{ job.orderNo }}</td>
+          <td>{{ job.customerName }}</td>
+          <td><app-status-chip [value]="job.stage" /></td>
+          <td><app-status-chip [value]="job.priority" /></td>
+          <td>{{ job.material }}</td>
+          <td>{{ job.operator || 'Unassigned' }}</td>
+          <td class="row-actions">
+            <button pButton type="button" icon="pi pi-arrow-right" class="p-button-text" label="Stage" (click)="openStageUpdate(job)"></button>
+            <button pButton type="button" icon="pi pi-user" class="p-button-text" label="Assign" (click)="openOperatorAssign(job)"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    </div>
+    }
+  </section>
+</section>
+
+<p-dialog header="Update stage" [modal]="true" [(visible)]="stageDialogOpen" [style]="{ width: 'min(420px, 95vw)' }">
+  <form (ngSubmit)="saveStage()" class="p-3">
+    <label class="text-label">Production stage</label>
+    <p-select
+      [options]="stageOptions"
+      [(ngModel)]="newStage"
+      name="newStage"
+      styleClass="w-full mt-2 mb-4"
+    />
+    <div class="flex justify-content-end gap-2">
+      <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="stageDialogOpen = false"></button>
+      <button pButton type="submit" label="Save"></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog header="Assign operator" [modal]="true" [(visible)]="operatorDialogOpen" [style]="{ width: 'min(420px, 95vw)' }">
+  <form (ngSubmit)="saveOperator()" class="p-3">
+    <label class="text-label">Print operator</label>
+    <input
+      pInputText
+      name="operator"
+      [(ngModel)]="operator"
+      required
+      minlength="2"
+      [attr.list]="operatorSuggestions().length ? 'print-queue-operator-suggestions' : null"
+      placeholder="Enter operator name"
+      class="w-full mt-2 mb-4"
+    />
+    @if (operatorSuggestions().length) {
+      <datalist id="print-queue-operator-suggestions">
+        @for (name of operatorSuggestions(); track name) {
+          <option [value]="name"></option>
+        }
+      </datalist>
+    }
+    <div class="flex justify-content-end gap-2">
+      <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="operatorDialogOpen = false"></button>
+      <button pButton type="submit" label="Save"></button>
+    </div>
+  </form>
+</p-dialog>

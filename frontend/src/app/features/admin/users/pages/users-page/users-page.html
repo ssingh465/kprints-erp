@@ -1,0 +1,266 @@
+<section class="operation-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Users</h1>
+      <p class="page-subtitle">Invite team members, approve accounts, and assign roles.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-user-plus" label="Invite user" (click)="openInvite()"></button>
+  </div>
+
+  <div class="table-toolbar">
+    <label class="search-field">
+      <i class="pi pi-search" aria-hidden="true"></i>
+      <input
+        pInputText
+        type="search"
+        placeholder="Search email or name"
+        [(ngModel)]="search"
+        (keyup.enter)="onFilterChange()"
+      />
+    </label>
+
+    <div class="filters">
+      <p-select
+        [options]="roleOptions"
+        [(ngModel)]="roleFilter"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All roles"
+        styleClass="filter-select"
+        [showClear]="true"
+        (onChange)="onFilterChange()"
+      />
+
+      <p-select
+        [options]="statusOptions"
+        [(ngModel)]="statusFilter"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="All statuses"
+        styleClass="filter-select"
+        [showClear]="true"
+        (onChange)="onFilterChange()"
+      />
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-refresh"
+        label="Refresh"
+        severity="secondary"
+        (click)="loadUsers()"
+      ></button>
+    </div>
+  </div>
+
+  <section class="erp-panel">
+    @if (loading()) {
+      <app-table-panel-skeleton />
+    } @else {
+      <div class="app-table-wrapper">
+        <p-table
+          [value]="rows()"
+          [paginator]="true"
+          [rows]="10"
+          [scrollable]="true"
+          [tableStyle]="{ 'min-width': '900px' }"
+          styleClass="app-table p-datatable-sm"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th class="actions-col">Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td><strong>{{ row.email }}</strong></td>
+              <td>{{ row.fullName || '—' }}</td>
+              <td>
+                <p-tag [value]="roleLabel(row.role)" severity="secondary" [rounded]="true" />
+              </td>
+              <td>
+                <p-tag
+                  [value]="statusLabel(row.status)"
+                  [severity]="statusSeverity(row.status)"
+                  [rounded]="true"
+                />
+              </td>
+              <td>{{ row.createdAt | date: 'mediumDate' }}</td>
+              <td class="actions-col">
+                <div class="row-actions">
+                  @if (row.type === 'user' && row.status === 'pending') {
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-check"
+                      label="Approve"
+                      size="small"
+                      (click)="approveUser(row)"
+                    ></button>
+                  }
+                  @if (row.type === 'user' && row.status !== 'disabled') {
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-user-edit"
+                      label="Role"
+                      size="small"
+                      severity="secondary"
+                      (click)="openRoleDialog(row)"
+                    ></button>
+                  }
+                  @if (row.type === 'user' && row.status === 'active') {
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-ban"
+                      label="Deactivate"
+                      size="small"
+                      severity="danger"
+                      [outlined]="true"
+                      (click)="openDeactivateDialog(row)"
+                    ></button>
+                  }
+                  @if (row.type === 'invitation') {
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-send"
+                      label="Resend"
+                      size="small"
+                      severity="secondary"
+                      (click)="resendInvite(row)"
+                    ></button>
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-times"
+                      label="Revoke"
+                      size="small"
+                      severity="danger"
+                      [outlined]="true"
+                      (click)="revokeInvite(row)"
+                    ></button>
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="6" class="empty-cell">No users match your filters.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    }
+  </section>
+</section>
+
+<!-- Invite dialog -->
+<p-dialog
+  header="Invite user"
+  [modal]="true"
+  [(visible)]="inviteOpen"
+  [style]="{ width: 'min(480px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  <div class="dialog-body">
+    <div class="field">
+      <label for="invite-email">Email</label>
+      <input
+        pInputText
+        id="invite-email"
+        type="email"
+        [(ngModel)]="inviteEmail"
+        placeholder="colleague@kprints.com"
+        class="w-full"
+      />
+    </div>
+    <div class="field">
+      <label for="invite-role">Role</label>
+      <p-select
+        inputId="invite-role"
+        [options]="roleOptions"
+        [(ngModel)]="inviteRole"
+        optionLabel="label"
+        optionValue="value"
+        class="w-full"
+      />
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cancel" severity="secondary" (click)="inviteOpen = false"></button>
+    <button
+      pButton
+      type="button"
+      label="Send invitation"
+      [loading]="inviteSubmitting"
+      (click)="submitInvite()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Change role dialog -->
+<p-dialog
+  header="Change role"
+  [modal]="true"
+  [(visible)]="roleDialogOpen"
+  [style]="{ width: 'min(420px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  @if (roleTarget) {
+    <p class="dialog-hint">Update role for <strong>{{ roleTarget.email }}</strong></p>
+    <p-select
+      [options]="roleOptions"
+      [(ngModel)]="roleValue"
+      optionLabel="label"
+      optionValue="value"
+      class="w-full"
+    />
+  }
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cancel" severity="secondary" (click)="roleDialogOpen = false"></button>
+    <button
+      pButton
+      type="button"
+      label="Save role"
+      [loading]="roleSubmitting"
+      (click)="submitRoleChange()"
+    ></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Deactivate confirm dialog -->
+<p-dialog
+  header="Deactivate user"
+  [modal]="true"
+  [(visible)]="deactivateDialogOpen"
+  [style]="{ width: 'min(420px, 95vw)' }"
+  [draggable]="false"
+  [resizable]="false"
+>
+  @if (deactivateTarget) {
+    <p>
+      Deactivate <strong>{{ deactivateTarget.email }}</strong>? They will no longer be able to sign in.
+    </p>
+  }
+  <ng-template pTemplate="footer">
+    <button pButton type="button" label="Cancel" severity="secondary" (click)="deactivateDialogOpen = false"></button>
+    <button
+      pButton
+      type="button"
+      label="Deactivate"
+      severity="danger"
+      [loading]="deactivateSubmitting"
+      (click)="confirmDeactivate()"
+    ></button>
+  </ng-template>
+</p-dialog>
