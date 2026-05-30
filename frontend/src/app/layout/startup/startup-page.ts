@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
@@ -29,7 +30,7 @@ export class StartupPage {
     try {
       // Setup routes are public — bootstrap before enabling demo header on requests.
       const status = await firstValueFrom(this.api.get<SetupStatus>('/setup/status'));
-      if (!status?.setupCompleted) {
+      if (!status?.demoMode) {
         await firstValueFrom(this.api.post('/setup/demo', {}));
       }
       this.demo.enterDemo();
@@ -42,10 +43,13 @@ export class StartupPage {
   }
 
   private resolveDemoError(err: unknown): string {
-    if (err && typeof err === 'object' && 'status' in err) {
-      const status = (err as { status: number }).status;
-      if (status === 0) {
+    if (err instanceof HttpErrorResponse) {
+      if (err.status === 0) {
         return 'Cannot reach the backend. Start it with: npm run dev --prefix backend';
+      }
+      const message = (err.error as { message?: string })?.message;
+      if (message) {
+        return message;
       }
     }
     if (err instanceof Error && err.message) {

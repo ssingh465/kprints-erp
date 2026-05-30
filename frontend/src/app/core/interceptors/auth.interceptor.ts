@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { catchError, throwError } from 'rxjs';
 import { SessionService } from '../auth/session.service';
+import { DemoModeService } from '../auth/demo-mode.service';
 
 /**
  * Attaches either a Bearer token (authenticated) or the demo-mode header.
@@ -11,6 +12,7 @@ import { SessionService } from '../auth/session.service';
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const session = inject(SessionService);
+  const demo = inject(DemoModeService);
   const router = inject(Router);
   const messages = inject(MessageService);
 
@@ -32,13 +34,24 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         const code = (err.error as { error?: string }).error;
 
         if (err.status === 401 && code === 'Unauthorized') {
-          messages.add({
-            severity: 'warn',
-            summary: 'Session expired',
-            detail: 'Your session has expired. Please sign in again.',
-            life: 6000,
-          });
-          void router.navigate(['/auth/session-expired']);
+          if (session.isDemoMode()) {
+            demo.exitDemo();
+            messages.add({
+              severity: 'warn',
+              summary: 'Demo unavailable',
+              detail: 'The demo sandbox could not be reached. Try again from the welcome screen.',
+              life: 6000,
+            });
+            void router.navigate(['/welcome']);
+          } else {
+            messages.add({
+              severity: 'warn',
+              summary: 'Session expired',
+              detail: 'Your session has expired. Please sign in again.',
+              life: 6000,
+            });
+            void router.navigate(['/auth/session-expired']);
+          }
         } else if (err.status === 403) {
           switch (code) {
             case 'PendingApproval':

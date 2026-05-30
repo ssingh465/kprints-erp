@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { SetupService } from './setup.service.js';
-import { protectSetupMutation } from '../../middleware/protect.js';
+import { protectSetupDemo, protectSetupMutation } from '../../middleware/protect.js';
 import type { AuthVariables } from '../../types/auth.js';
 
 const setupApp = new Hono<{ Variables: AuthVariables }>();
@@ -22,7 +22,7 @@ setupApp.get('/status', async (c) => {
   }
 });
 
-setupApp.use('/demo', ...protectSetupMutation());
+setupApp.use('/demo', ...protectSetupDemo());
 setupApp.use('/fresh', ...protectSetupMutation());
 
 setupApp.post('/demo', async (c) => {
