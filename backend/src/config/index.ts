@@ -15,6 +15,11 @@ export const config = {
 
 /** Fail fast in production when critical env vars are missing. */
 export function validateConfig(): void {
+  // Allow Vercel builds to bundle the API before env vars are configured.
+  if (process.env.VERCEL === '1' && !config.databaseUrl) {
+    return;
+  }
+
   const required: Array<{ key: keyof typeof config; env: string }> = [
     { key: 'databaseUrl', env: 'DATABASE_URL' },
     { key: 'supabaseUrl', env: 'SUPABASE_URL' },

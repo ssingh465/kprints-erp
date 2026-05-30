@@ -28,6 +28,16 @@ validateConfig();
 
 const app = new Hono();
 
+app.use('*', async (c, next) => {
+  if (config.nodeEnv === 'production' && !config.databaseUrl) {
+    return c.json(
+      { success: false, error: 'ServerMisconfigured', message: 'DATABASE_URL is not configured.' },
+      503
+    );
+  }
+  await next();
+});
+
 // 1. Configure CORS
 const corsOrigin = resolveCorsOrigin();
 app.use(

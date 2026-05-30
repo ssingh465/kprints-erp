@@ -12,6 +12,7 @@
     "backend:build": "npm run build --prefix backend",
     "backend:start": "npm run start --prefix backend",
     "db:push": "npm run prisma:migrate --prefix backend",
-    "dev:all": "npx.cmd concurrently \"npm run backend:dev\" \"npm run start\""
+    "dev:all": "npx.cmd concurrently \"npm run backend:dev\" \"npm run start\"",
+    "vercel-build": "npm run vercel-build --prefix backend && npm run vercel-build --prefix frontend"
   }
 }
