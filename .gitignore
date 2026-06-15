@@ -41,6 +41,8 @@ Thumbs.db
 # Backend
 /backend/node_modules
 /backend/.env
+/backend/.env.test
+/backend/.env.test.local
 /backend/dist
 
 # Frontend

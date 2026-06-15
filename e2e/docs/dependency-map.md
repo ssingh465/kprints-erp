@@ -1,6 +1,6 @@
 # KPrints ERP — Module Dependency Map
 
-> **Phase 1 — Discovery Audit.** Read-only inventory of every frontend route, backend route group, Prisma entity, and the relationships between them as they exist in the current codebase. This is the source of truth for downstream Playwright workflow tests (Phase 5+) and the production-readiness audit (Phase 16).
+> **Discovery audit.** Read-only inventory of every frontend route, backend route group, Prisma entity, and the relationships between them as they exist in the current codebase. This is the source of truth for downstream Playwright workflow tests and the final production-readiness audit.
 >
 > **How to read this doc:** modules are grouped by domain. For each module you get UI route → backend route → service → Prisma entity → dependent entities. Workflow side effects (which module mutates which entity) live in [`workflow-map.md`](workflow-map.md). Known gaps live in [`missing-functionality-report.md`](missing-functionality-report.md).
 
@@ -325,7 +325,7 @@ Dotted edges = the schema implies a relationship that is **not yet implemented i
 
 ## 6. Audit-Log Coverage Snapshot
 
-Used downstream by Phase 8 DB validation to assert mutations leave evidence.
+Used downstream by the DB-validation suite to assert mutations leave evidence.
 
 | Module | Action | Audited? | Source |
 |---|---|---|---|
@@ -343,7 +343,7 @@ Used downstream by Phase 8 DB validation to assert mutations leave evidence.
 | upload | artwork upload | ❌ | not wired |
 | setup | demo / fresh | ❌ | not wired (and these are destructive) |
 
-This list informs **Phase 7 (RBAC)** and **Phase 8 (DB validation)** test design — any mutation surface lacking an audit log is either a gap to fix or a deliberate omission to document.
+This list informs **RBAC** and **DB-validation** test design — any mutation surface lacking an audit log is either a gap to fix or a deliberate omission to document.
 
 ---
 
@@ -386,10 +386,10 @@ flowchart LR
 
 ## 8. Implications for E2E Test Architecture
 
-1. **Single Prisma client = single DB** at any time per backend process → the test suite must run against a dedicated Supabase TEST project (Phase 2). `wipeDatabase()` is **only safe** if `DATABASE_URL` points at the TEST project — guard accordingly.
+1. **Single Prisma client = single DB** at any time per backend process → the test suite must run against a dedicated Supabase TEST project. `wipeDatabase()` is **only safe** if `DATABASE_URL` points at the TEST project — guard accordingly.
 2. **Workflow tests must triangulate** UI ↔ API ↔ DB for every transition because three different services (`OrdersService`, `ProductionService`, `ShipmentsService`) can mutate `Order.status`, and they don't all keep `ProductionJob.stage` in sync (see workflow map).
-3. **RBAC tests cannot rely on demo header.** Use 8 authenticated personas (Phase 3) and assert both `403` from API and the `/auth/unauthorized` redirect from UI.
-4. **Audit-log assertions are partial.** Don't assert audit rows on production/shipments/uploads/posters/coupons until those gaps are closed (see Phase 14/15 backlog).
+3. **RBAC tests cannot rely on demo header.** Use 8 authenticated personas and assert both `403` from API and the `/auth/unauthorized` redirect from UI.
+4. **Audit-log assertions are partial.** Don't assert audit rows on production/shipments/uploads/posters/coupons until those gaps are closed (see backlog in missing-functionality-report.md).
 5. **`/api/setup/fresh` and `/api/setup/demo` must never run against production.** CI: guard with explicit env check before invoking.
 6. **Order → inventory linkage is missing.** Workflow tests should explicitly cover the "happy path without inventory" today, and flip to "with inventory decrement" once the gap is closed.
 

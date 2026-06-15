@@ -14,7 +14,9 @@
     "prisma:migrate": "prisma db push",
     "prisma:studio": "prisma studio",
     "seed:super-admin": "tsx prisma/seed-user.ts",
-    "seed:user": "tsx prisma/seed-user.ts"
+    "seed:user": "tsx prisma/seed-user.ts",
+    "test:reset": "tsx scripts/test-reset.ts",
+    "test:reset:keep-audit": "tsx scripts/test-reset.ts --keep-audit"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",

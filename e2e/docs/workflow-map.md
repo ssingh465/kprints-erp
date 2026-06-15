@@ -1,6 +1,6 @@
 # KPrints ERP — Business Workflow Map
 
-> **Phase 1 — Discovery Audit.** Read-only catalogue of every cross-module workflow as currently coded. Each workflow is documented as a state machine with the explicit DB side effects the service layer performs. This document is the contract Playwright Phase 5+ tests will assert against.
+> **Discovery audit.** Read-only catalogue of every cross-module workflow as currently coded. Each workflow is documented as a state machine with the explicit DB side effects the service layer performs. This document is the contract Playwright workflow tests will assert against.
 >
 > See companion docs: [`dependency-map.md`](dependency-map.md) (module/entity inventory), [`missing-functionality-report.md`](missing-functionality-report.md) (what's missing, ordered by severity).
 
@@ -64,7 +64,7 @@ stateDiagram-v2
   ReadyForPickup : Ready for Pickup
 ```
 
-**Currently the code does NOT enforce these transitions** — `PUT /api/orders/:id` and `PUT /api/production/:id/stage` accept any value in the enum from any prior value. Workflow tests must therefore assert _side effects_, not transition legality. Closing this is a Phase 5 / 11 candidate fix.
+**Currently the code does NOT enforce these transitions** — `PUT /api/orders/:id` and `PUT /api/production/:id/stage` accept any value in the enum from any prior value. Workflow tests must therefore assert _side effects_, not transition legality. Closing this is a workflow / API-contract candidate fix.
 
 ---
 
@@ -88,7 +88,7 @@ sequenceDiagram
   API-->>UI: 201 + Customer
 ```
 
-**Assertions for Phase 5 / 8 tests**
+**Assertions for workflow + DB-validation tests**
 
 | Layer | Expectation |
 |---|---|
@@ -134,13 +134,13 @@ sequenceDiagram
 
 **Critical observations**
 
-- `orderNo` and `jobNo` are derived from `count(*)`. **Not concurrency-safe** under bursty load (two parallel creates race to the same number). Phase 11 API tests should attempt a small concurrent burst and assert uniqueness.
+- `orderNo` and `jobNo` are derived from `count(*)`. **Not concurrency-safe** under bursty load (two parallel creates race to the same number). API contract tests should attempt a small concurrent burst and assert uniqueness.
 - `OrderItem.posterId` is optional; orders for custom designs leave it null.
 - **No inventory side effect.** `Poster.stock` is not decremented, and no `InventoryMovement` is logged. (See [`missing-functionality-report.md`](missing-functionality-report.md#G1).)
 - **No coupon discount applied.** `total` is whatever the UI computed.
 - The auto-create-production-job branch only fires for the listed stages — orders created at `Draft` / `Design Pending` do **not** get a `ProductionJob` until they advance.
 
-**Assertions for Phase 5 / 8 tests**
+**Assertions for workflow + DB-validation tests**
 
 | Layer | Expectation |
 |---|---|
@@ -236,7 +236,7 @@ flowchart TD
 | `Delivered` | order updated; productionJob.stage updated to Delivered; shipment created if missing or marked Delivered | order updated; productionJob.stage updated; shipment **NOT** touched (drift if it already exists) |
 | `Cancelled` | order updated; productionJob.stage updated to Cancelled; shipment not touched | order updated; productionJob.stage updated; shipment not touched (drift) |
 
-> **Gap callout:** `Ready for Pickup` via Orders PUT leaves `ProductionJob.stage` stale, and `Delivered` via Production PUT leaves `Shipment.status` stale. Either fix the service code or document in the readiness report (Phase 16). Phase 5 tests should explicitly drive the workflow via the Production kanban (primary UX) and assert UI/API/DB consistency.
+> **Gap callout:** `Ready for Pickup` via Orders PUT leaves `ProductionJob.stage` stale, and `Delivered` via Production PUT leaves `Shipment.status` stale. Either fix the service code or document in the readiness report. Workflow tests should explicitly drive the workflow via the Production kanban (primary UX) and assert UI/API/DB consistency.
 
 ---
 
@@ -458,7 +458,7 @@ Side-effect: **read-only**. The dashboard never mutates data.
 | `notifications` (signals) | derived from unassigned prod jobs, low-stock items, packed shipments, profit-margin month-over-month |
 | `activityTimeline` (signals) | merged stream of recent prod jobs, recent orders, low-stock items, recent deliveries |
 
-### Phase 6 test pattern
+### Dashboard test pattern
 
 After each workflow step in W2–W7, hit `GET /api/dashboard` and assert the relevant widget changed by the expected delta (e.g., creating an order should bump `revenue` by `order.total`, `orderCount` by 1, and either add to `pipeline['Design Pending']` or whatever stage was used).
 
@@ -523,7 +523,7 @@ stateDiagram-v2
 - `approvalGuard` redirects unapproved users to `/auth/pending-approval`.
 - `roleGuard` checks the route's `data.module` against `ROLE_ACCESS`.
 
-**Phase 10 test matrix**
+**Authentication test matrix**
 
 | Scenario | Expected UX |
 |---|---|
@@ -547,7 +547,7 @@ stateDiagram-v2
 
 **Side effects:** none. Coupons are stored but **never consulted by any order or finance flow**. `Order.total` is whatever the UI computes; there is no FK or denormalised field linking a coupon to an order or order line.
 
-Phase 14/15 backlog: either implement coupon → order discount or document as "metadata-only".
+UX-feedback / error-handling backlog: either implement coupon → order discount or document as "metadata-only".
 
 ---
 
@@ -580,7 +580,7 @@ sequenceDiagram
 
 **Tables wiped (in order):** `order_items, production_jobs, shipments, invoices, artwork_uploads, orders, inventory_movements, inventory_items, expenses, coupons, partner_investments, partners, suppliers, customers, posters, poster_categories, dashboard_snapshots, settings`.
 
-**NOT wiped:** `app_users`, `user_invitations`, `audit_logs` — these survive a setup reset. This is by design (auth survives), but Phase 8 audit tests should explicitly cover the "reset preserves users + audit history" property.
+**NOT wiped:** `app_users`, `user_invitations`, `audit_logs` — these survive a setup reset. This is by design (auth survives), but DB-validation tests should explicitly cover the "reset preserves users + audit history" property.
 
 **Test policy**
 
@@ -627,7 +627,7 @@ Cells marked **gap** flag known issues from [`missing-functionality-report.md`](
 
 ## 16. Cross-Module End-to-End Happy-Path Scenario (E2E spec target)
 
-The Phase 5 master workflow test will drive this sequence and assert at every step via UI + API + DB.
+The master workflow test will drive this sequence and assert at every step via UI + API + DB.
 
 ```mermaid
 sequenceDiagram
