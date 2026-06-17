@@ -2,22 +2,22 @@
  * Canonical, deterministic UUIDs for the TEST_* fixture set.
  *
  * Layout: every TEST fixture UUID follows the form
- *   <ENTITY-PREFIX>-1111-1111-1111-NNNNNNNNNNNN
- * so a human can recognise a "test fixture" id at a glance versus a
- * real Supabase-generated id (random hex in every group).
+ *   <ENTITY-TYPE>-1111-1111-1111-NNNNNNNNNNNN
+ * where ENTITY-TYPE is a hex-encoded entity discriminator so ids remain
+ * human-scannable while satisfying Postgres @db.Uuid (hex digits only).
  *
- * Prefix legend:
- *   c0000001 — customers
- *   p0000002 — posters
- *   s0000003 — suppliers
- *   i0000004 — inventory items
- *   o0000005 — orders
- *   o0000005 + line — order items (suffix index)
- *   j0000006 — production jobs
- *   h0000007 — shipments
- *   e0000008 — expenses
- *   k0000009 — coupons
- *   r0000010 — partners
+ * Prefix legend (first UUID group = entity type, zero-padded hex):
+ *   01000001 — customers
+ *   02000001 — posters
+ *   03000001 — suppliers
+ *   04000001 — inventory items
+ *   05000001 — orders
+ *   05000001 + line suffix — order items (…10000000000N)
+ *   06000001 — production jobs
+ *   07000001 — shipments
+ *   08000001 — expenses
+ *   09000001 — coupons
+ *   0a000001 — partners
  *
  * Pure constants — no runtime side effects, no Prisma dependency.
  * Re-exported from e2e/factories/test-ids.ts so Playwright tests and
@@ -25,67 +25,67 @@
  */
 
 // ---------- Customers ------------------------------------------------
-export const TEST_CUSTOMER_001 = 'c0000001-1111-1111-1111-000000000001';
-export const TEST_CUSTOMER_002 = 'c0000001-1111-1111-1111-000000000002';
-export const TEST_CUSTOMER_003 = 'c0000001-1111-1111-1111-000000000003';
-export const TEST_CUSTOMER_VIP = 'c0000001-1111-1111-1111-000000000099';
+export const TEST_CUSTOMER_001 = '01000001-1111-1111-1111-000000000001';
+export const TEST_CUSTOMER_002 = '01000001-1111-1111-1111-000000000002';
+export const TEST_CUSTOMER_003 = '01000001-1111-1111-1111-000000000003';
+export const TEST_CUSTOMER_VIP = '01000001-1111-1111-1111-000000000099';
 
 // ---------- Posters --------------------------------------------------
-export const TEST_POSTER_001 = 'p0000002-1111-1111-1111-000000000001';
-export const TEST_POSTER_002_OUT_OF_STOCK = 'p0000002-1111-1111-1111-000000000002';
-export const TEST_POSTER_003_LOW_STOCK = 'p0000002-1111-1111-1111-000000000003';
-export const TEST_POSTER_004_PERSONALIZED = 'p0000002-1111-1111-1111-000000000004';
+export const TEST_POSTER_001 = '02000001-1111-1111-1111-000000000001';
+export const TEST_POSTER_002_OUT_OF_STOCK = '02000001-1111-1111-1111-000000000002';
+export const TEST_POSTER_003_LOW_STOCK = '02000001-1111-1111-1111-000000000003';
+export const TEST_POSTER_004_PERSONALIZED = '02000001-1111-1111-1111-000000000004';
 
 // ---------- Suppliers ------------------------------------------------
-export const TEST_SUPPLIER_001 = 's0000003-1111-1111-1111-000000000001';
-export const TEST_SUPPLIER_002_NO_BALANCE = 's0000003-1111-1111-1111-000000000002';
-export const TEST_SUPPLIER_003_OVERDUE = 's0000003-1111-1111-1111-000000000003';
+export const TEST_SUPPLIER_001 = '03000001-1111-1111-1111-000000000001';
+export const TEST_SUPPLIER_002_NO_BALANCE = '03000001-1111-1111-1111-000000000002';
+export const TEST_SUPPLIER_003_OVERDUE = '03000001-1111-1111-1111-000000000003';
 
 // ---------- Inventory items -----------------------------------------
-export const TEST_INVENTORY_ITEM_001 = 'i0000004-1111-1111-1111-000000000001';
-export const TEST_INVENTORY_ITEM_002_LOW = 'i0000004-1111-1111-1111-000000000002';
-export const TEST_INVENTORY_ITEM_003_ALERT = 'i0000004-1111-1111-1111-000000000003';
-export const TEST_INVENTORY_ITEM_004_FRAMES = 'i0000004-1111-1111-1111-000000000004';
+export const TEST_INVENTORY_ITEM_001 = '04000001-1111-1111-1111-000000000001';
+export const TEST_INVENTORY_ITEM_002_LOW = '04000001-1111-1111-1111-000000000002';
+export const TEST_INVENTORY_ITEM_003_ALERT = '04000001-1111-1111-1111-000000000003';
+export const TEST_INVENTORY_ITEM_004_FRAMES = '04000001-1111-1111-1111-000000000004';
 
 // ---------- Orders ---------------------------------------------------
 // Status coverage spans the canonical Order.status state machine
 // (workflow-map.md §1) so a single seeded TEST_* set lets workflow tests
 // pick any starting status without bespoke setup.
-export const TEST_ORDER_001_DRAFT = 'o0000005-1111-1111-1111-000000000001';
-export const TEST_ORDER_002_DESIGN_PENDING = 'o0000005-1111-1111-1111-000000000002';
-export const TEST_ORDER_003_PRINTING = 'o0000005-1111-1111-1111-000000000003';
-export const TEST_ORDER_004_READY_FOR_SHIPPING = 'o0000005-1111-1111-1111-000000000004';
-export const TEST_ORDER_005_DELIVERED = 'o0000005-1111-1111-1111-000000000005';
-export const TEST_ORDER_006_CANCELLED = 'o0000005-1111-1111-1111-000000000006';
+export const TEST_ORDER_001_DRAFT = '05000001-1111-1111-1111-000000000001';
+export const TEST_ORDER_002_DESIGN_PENDING = '05000001-1111-1111-1111-000000000002';
+export const TEST_ORDER_003_PRINTING = '05000001-1111-1111-1111-000000000003';
+export const TEST_ORDER_004_READY_FOR_SHIPPING = '05000001-1111-1111-1111-000000000004';
+export const TEST_ORDER_005_DELIVERED = '05000001-1111-1111-1111-000000000005';
+export const TEST_ORDER_006_CANCELLED = '05000001-1111-1111-1111-000000000006';
 
 // First-line item id per seeded order (orders that have one)
-export const TEST_ORDER_ITEM_001 = 'o0000005-1111-1111-1111-100000000001';
-export const TEST_ORDER_ITEM_002 = 'o0000005-1111-1111-1111-100000000002';
-export const TEST_ORDER_ITEM_003 = 'o0000005-1111-1111-1111-100000000003';
-export const TEST_ORDER_ITEM_004 = 'o0000005-1111-1111-1111-100000000004';
-export const TEST_ORDER_ITEM_005 = 'o0000005-1111-1111-1111-100000000005';
-export const TEST_ORDER_ITEM_006 = 'o0000005-1111-1111-1111-100000000006';
+export const TEST_ORDER_ITEM_001 = '05000001-1111-1111-1111-100000000001';
+export const TEST_ORDER_ITEM_002 = '05000001-1111-1111-1111-100000000002';
+export const TEST_ORDER_ITEM_003 = '05000001-1111-1111-1111-100000000003';
+export const TEST_ORDER_ITEM_004 = '05000001-1111-1111-1111-100000000004';
+export const TEST_ORDER_ITEM_005 = '05000001-1111-1111-1111-100000000005';
+export const TEST_ORDER_ITEM_006 = '05000001-1111-1111-1111-100000000006';
 
 // ---------- Production jobs (paired with orders 003/004/005) --------
-export const TEST_PRODUCTION_JOB_001 = 'j0000006-1111-1111-1111-000000000001';
-export const TEST_PRODUCTION_JOB_002 = 'j0000006-1111-1111-1111-000000000002';
-export const TEST_PRODUCTION_JOB_003 = 'j0000006-1111-1111-1111-000000000003';
+export const TEST_PRODUCTION_JOB_001 = '06000001-1111-1111-1111-000000000001';
+export const TEST_PRODUCTION_JOB_002 = '06000001-1111-1111-1111-000000000002';
+export const TEST_PRODUCTION_JOB_003 = '06000001-1111-1111-1111-000000000003';
 
 // ---------- Shipments (paired with orders 004 + 005) ----------------
-export const TEST_SHIPMENT_001_PACKED = 'h0000007-1111-1111-1111-000000000001';
-export const TEST_SHIPMENT_002_DELIVERED = 'h0000007-1111-1111-1111-000000000002';
+export const TEST_SHIPMENT_001_PACKED = '07000001-1111-1111-1111-000000000001';
+export const TEST_SHIPMENT_002_DELIVERED = '07000001-1111-1111-1111-000000000002';
 
 // ---------- Expenses -------------------------------------------------
-export const TEST_EXPENSE_001 = 'e0000008-1111-1111-1111-000000000001';
-export const TEST_EXPENSE_002_NO_SUPPLIER = 'e0000008-1111-1111-1111-000000000002';
+export const TEST_EXPENSE_001 = '08000001-1111-1111-1111-000000000001';
+export const TEST_EXPENSE_002_NO_SUPPLIER = '08000001-1111-1111-1111-000000000002';
 
 // ---------- Coupons --------------------------------------------------
-export const TEST_COUPON_001_ACTIVE = 'k0000009-1111-1111-1111-000000000001';
-export const TEST_COUPON_002_INACTIVE = 'k0000009-1111-1111-1111-000000000002';
+export const TEST_COUPON_001_ACTIVE = '09000001-1111-1111-1111-000000000001';
+export const TEST_COUPON_002_INACTIVE = '09000001-1111-1111-1111-000000000002';
 
 // ---------- Partners -------------------------------------------------
-export const TEST_PARTNER_001 = 'r0000010-1111-1111-1111-000000000001';
-export const TEST_PARTNER_002 = 'r0000010-1111-1111-1111-000000000002';
+export const TEST_PARTNER_001 = '0a000001-1111-1111-1111-000000000001';
+export const TEST_PARTNER_002 = '0a000001-1111-1111-1111-000000000002';
 
 // ---------- Deterministic identifiers (non-UUID) --------------------
 // Order numbers and job numbers used by the seeder so workflow tests
