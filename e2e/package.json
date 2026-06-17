@@ -6,7 +6,11 @@
   "description": "Playwright E2E workspace for KPrints ERP",
   "scripts": {
     "auth:setup": "tsx scripts/generate-auth-states.ts",
-    "auth:setup:force": "tsx scripts/generate-auth-states.ts --force"
+    "auth:setup:force": "tsx scripts/generate-auth-states.ts --force",
+    "test": "playwright test",
+    "test:workflows": "playwright test --project=workflows",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.0",

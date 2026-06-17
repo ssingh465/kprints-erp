@@ -13,9 +13,8 @@
  * Playwright is wired in `playwright.config.ts` via:
  *   globalSetup: require.resolve('./global-setup'),
  *
- * NOTE: Playwright itself is not installed yet (added by the
- * cross-cutting Playwright scaffold work). This file is dependency-
- * free TypeScript that will Just Work once @playwright/test is added.
+ * Playwright is configured in `playwright.config.ts` with globalSetup
+ * wired to reset the TEST database before each run.
  */
 
 import { existsSync } from 'node:fs';

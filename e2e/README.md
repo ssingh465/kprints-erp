@@ -5,7 +5,7 @@ This folder holds everything Playwright-driven and TEST-database-driven for KPri
 1. **TEST database infrastructure** — reset script, deterministic `TEST_*` fixtures, and the production guard that refuses to wipe non-TEST databases.
 2. **Playwright test surface** — page objects, factories, helpers, global setup/teardown, and the spec tree (added as work proceeds).
 
-See [`docs/dependency-map.md`](docs/dependency-map.md), [`docs/workflow-map.md`](docs/workflow-map.md), and [`docs/missing-functionality-report.md`](docs/missing-functionality-report.md) for the audit baseline that justifies every fixture and assertion choice.
+See [`docs/dependency-map.md`](docs/dependency-map.md), [`docs/workflow-map.md`](docs/workflow-map.md), [`docs/missing-functionality-report.md`](docs/missing-functionality-report.md), and [`docs/manual-test-matrix.md`](docs/manual-test-matrix.md) for the audit baseline and human QA checklist that justify every fixture and assertion choice.
 
 ---
 
@@ -144,19 +144,14 @@ Factories are deliberately dependency-free (native `fetch`) so they run from bot
 - [`global-setup.ts`](global-setup.ts) — loads `.env.test`, re-asserts the guard, shells out to `npm run test:reset --prefix backend`.
 - [`global-teardown.ts`](global-teardown.ts) — no-op today; future hooks for upload cleanup + perf reports.
 
-Wire them in the (forthcoming) `playwright.config.ts`:
+Wire them in [`playwright.config.ts`](playwright.config.ts):
 
-```ts
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  globalSetup: require.resolve('./global-setup'),
-  globalTeardown: require.resolve('./global-teardown'),
-  // ... projects, baseURL, etc.
-});
+```bash
+npm run test:e2e              # from repo root — all Playwright specs
+npm run test:e2e:workflows    # workflow suite only (Phase 5)
 ```
 
-Playwright itself is **not** installed yet — it lands in the cross-cutting `playwright-scaffold` task. The skeleton files above will Just Work once `@playwright/test` is added under `e2e/`.
+Workflow specs live under [`tests/workflows/`](tests/workflows/) and use [`fixtures/workflow-fixtures.ts`](fixtures/workflow-fixtures.ts) for API + DB triangulation.
 
 ---
 

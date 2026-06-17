@@ -17,6 +17,8 @@
     "test:reset:keep-audit": "npm run test:reset:keep-audit --prefix backend",
     "seed:qa-users": "npm run seed:qa-users --prefix backend",
     "auth:setup": "npm run auth:setup --prefix e2e",
+    "test:e2e": "npm run test --prefix e2e",
+    "test:e2e:workflows": "npm run test:workflows --prefix e2e",
     "vercel-build": "npm run vercel-build --prefix backend && npm run vercel-build --prefix frontend"
   }
 }
