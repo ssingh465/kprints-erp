@@ -8,14 +8,16 @@
  *     Lamination, Framing, Packaging} → INSERT production_jobs
  *   - INSERT audit_logs (action=create, entity=order)
  *
- * Side effects NOT triggered today (gaps G1, G6):
- *   - Poster.stock unchanged
- *   - inventory_movements absent
- *   - coupons ignored
+ * Side effects triggered by `POST /api/orders`:
+ *   - INSERT orders + order_items
+ *   - UPDATE customers SET orderCount += 1, lifetimeValue += total
+ *   - if status ∈ production stages → INSERT production_jobs
+ *   - if status ∈ stock-consumption stages → decrement Poster.stock
+ *   - INSERT audit_logs (action=create, entity=order)
  *
- * Tests asserting the missing side effects must mark them as "current
- * behaviour" today and flip to the fixed behaviour once gap closure
- * lands (tracked as critical-fix candidates in the gap report).
+ * Side effects NOT triggered (remaining gaps):
+ *   - inventory_movements for raw-material consumption (G1 partial)
+ *   - coupons ignored (G6)
  */
 
 import { ApiClient } from './api-client.js';
@@ -52,6 +54,7 @@ export interface OrderInput {
   dueDate?: string | Date;
   total?: number;
   paid?: number;
+  couponCode?: string;
   lines: OrderLineInput[];
 }
 

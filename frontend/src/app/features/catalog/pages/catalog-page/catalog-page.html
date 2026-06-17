@@ -16,7 +16,7 @@
         <i class="pi pi-search" aria-hidden="true"></i>
         <input pInputText type="search" placeholder="Search SKU, title, category" [value]="search()" (input)="search.set($any($event.target).value)" />
       </label>
-      <button pButton type="button" icon="pi pi-tags" label="Manage tags" severity="secondary"></button>
+      <button pButton type="button" icon="pi pi-tags" label="Categories" severity="secondary" (click)="openCategoriesDialog()"></button>
     </div>
 
     @if (loading()) {
@@ -78,7 +78,7 @@
         <div class="col flex flex-column gap-2">
           <label for="category" class="text-label">Category</label>
           <p-select
-            [options]="posterCategories"
+            [options]="categoryNames().length ? categoryNames() : ['Minimalist']"
             [(ngModel)]="newPoster.category"
             name="category"
             inputId="category"
@@ -116,6 +116,32 @@
         <button pButton type="submit" label="Save Poster" [disabled]="!posterForm.valid" class="p-button-primary"></button>
       </div>
     </form>
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="Poster categories"
+  [modal]="true"
+  [(visible)]="categoriesDialogOpen"
+  [style]="{ width: 'min(480px, 95vw)' }"
+>
+  <div class="p-3">
+    <div class="flex gap-2 mb-3">
+      <input pInputText [(ngModel)]="newCategoryName" placeholder="New category name" class="flex-1" />
+      <button pButton type="button" label="Add" (click)="saveCategory()"></button>
+    </div>
+    @if (categories().length === 0) {
+      <p class="muted">No categories yet. Add one to organize the catalog.</p>
+    } @else {
+      <ul class="category-list">
+        @for (category of categories(); track category.id) {
+          <li>
+            <span>{{ category.name }}</span>
+            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger" (click)="deleteCategory(category)"></button>
+          </li>
+        }
+      </ul>
+    }
   </div>
 </p-dialog>
 

@@ -1,10 +1,11 @@
 import { prisma } from '../../lib/prisma.js';
+import type { Prisma } from '@prisma/client';
 
 export class CustomersService {
   async list(options: { search?: string; skip?: number; take?: number; sortBy?: string; sortOrder?: 'asc' | 'desc' }) {
     const { search, skip, take, sortBy, sortOrder } = options;
 
-    const where: any = {};
+    const where: Prisma.CustomerWhereInput = {};
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },

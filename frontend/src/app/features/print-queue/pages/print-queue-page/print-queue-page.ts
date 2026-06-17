@@ -8,7 +8,9 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { ApiClientService } from '../../../../core/services/api-client.service';
 import { ErpDataService } from '../../../../core/services/erp-data.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { OrderStatus, PrintJob } from '../../../../models/erp.models';
+import { PRINT_QUEUE_STAGES } from '../../../../shared/erp.constants';
 import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { TablePanelSkeleton } from '../../../../shared/components/table-panel-skeleton/table-panel-skeleton';
 
@@ -22,6 +24,7 @@ import { TablePanelSkeleton } from '../../../../shared/components/table-panel-sk
 export class PrintQueuePage {
   private readonly data = inject(ErpDataService);
   private readonly api = inject(ApiClientService);
+  private readonly toast = inject(ToastService);
 
   readonly search = signal('');
   readonly loading = computed(() => this.data.printJobs.loading());
@@ -41,22 +44,13 @@ export class PrintQueuePage {
     });
   });
 
-  readonly stages: Array<OrderStatus | 'All'> = [
-    'All',
-    'Printing Queued',
-    'Printing In Progress',
-    'Lamination',
-    'Framing',
-    'Packaging',
-    'Ready for Pickup',
-    'Ready for Shipping',
-  ];
-  readonly stageOptions = this.stages.filter((stage) => stage !== 'All') as OrderStatus[];
+  readonly stages: Array<OrderStatus | 'All'> = ['All', ...PRINT_QUEUE_STAGES];
+  readonly stageOptions = [...PRINT_QUEUE_STAGES];
   readonly operatorSuggestions = computed(() => {
     const names = new Set<string>();
     for (const job of this.jobs()) {
       const operator = job.operator?.trim();
-      if (operator && operator !== 'Operator Unassigned') {
+      if (operator) {
         names.add(operator);
       }
     }
@@ -77,8 +71,7 @@ export class PrintQueuePage {
 
   openOperatorAssign(job: PrintJob): void {
     this.selectedJob = job;
-    const current = job.operator?.trim();
-    this.operator = current && current !== 'Operator Unassigned' ? current : '';
+    this.operator = job.operator?.trim() ?? '';
     this.operatorDialogOpen = true;
   }
 
@@ -86,8 +79,13 @@ export class PrintQueuePage {
     if (!this.selectedJob) return;
     this.api.put<PrintJob>(`/production/${this.selectedJob.id}/stage`, { stage: this.newStage }).subscribe({
       next: () => {
+        this.toast.success('Stage updated', `Job moved to ${this.newStage}.`);
         this.data.printJobs.refresh();
         this.stageDialogOpen = false;
+      },
+      error: (err) => {
+        const detail = err?.error?.message ?? err?.message ?? 'Please try again.';
+        this.toast.error('Stage update failed', detail);
       },
     });
   }
@@ -96,8 +94,13 @@ export class PrintQueuePage {
     if (!this.selectedJob) return;
     this.api.put<PrintJob>(`/production/${this.selectedJob.id}/operator`, { operator: this.operator }).subscribe({
       next: () => {
+        this.toast.success('Operator assigned', `${this.operator} assigned to ${this.selectedJob!.jobNo}.`);
         this.data.printJobs.refresh();
         this.operatorDialogOpen = false;
+      },
+      error: (err) => {
+        const detail = err?.error?.message ?? err?.message ?? 'Please try again.';
+        this.toast.error('Operator assignment failed', detail);
       },
     });
   }

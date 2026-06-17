@@ -44,7 +44,7 @@ test.describe('Workflow: Production → Shipment → Delivered', () => {
     expect(apiOrder.data.status).toBe('Ready for Shipping');
   });
 
-  test('shipment Delivered mirrors order.status (production stage may drift — G8)', async ({ api, db }) => {
+  test('shipment Delivered mirrors order and production job stage (G8 fixed)', async ({ api, db }) => {
     const customer = await createCustomer(api);
     const order = await createOrder(api, {
       customerId: customer.id,
@@ -68,8 +68,7 @@ test.describe('Workflow: Production → Shipment → Delivered', () => {
     expect(dbOrder?.status).toBe('Delivered');
 
     const dbJob = await db.getProductionJobByOrderId(order.id);
-    // Documented gap G8: production job stage is NOT updated on shipment deliver.
-    expect(dbJob?.stage).not.toBe('Delivered');
+    expect(dbJob?.stage).toBe('Delivered');
   });
 
   test('Orders PUT to Ready for Shipping also creates shipment', async ({ api, db }) => {

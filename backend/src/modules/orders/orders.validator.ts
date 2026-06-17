@@ -35,6 +35,7 @@ export const orderCreateSchema = z.object({
   dueDate: z.string().min(1, 'Due date is required'),
   total: z.number().min(0, 'Total cannot be negative'),
   paid: z.number().min(0, 'Paid cannot be negative').default(0).optional(),
+  couponCode: z.string().min(2).optional(),
   lines: z.array(orderLineSchema).min(1, 'An order must contain at least one line item')
 });
 

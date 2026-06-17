@@ -346,13 +346,8 @@ export const routes: Routes = [
           ),
       },
       {
-        path: ':module',
-        title: 'Operations | KPrints ERP',
-        canActivate: shellGuards,
-        loadComponent: () =>
-          import('./features/operations/pages/operation-page/operation-page').then(
-            (m) => m.OperationPage,
-          ),
+        path: '**',
+        redirectTo: 'dashboard',
       },
     ],
   },

@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 import { ApiClientService } from '../../../../core/services/api-client.service';
+import { ToastService } from '../../../../core/services/toast.service';
+import { SETUP_CONFIRM_TOKEN } from '../../../../shared/erp.constants';
 import { SettingsCardSkeleton } from '../../../../shared/components/settings-card-skeleton/settings-card-skeleton';
 
 type SetupStatus = {
@@ -29,7 +31,8 @@ export class SettingsPage implements OnInit {
   loadingFresh = false;
   actionError: string | null = null;
 
-  constructor(private readonly apiClient: ApiClientService) {}
+  private readonly apiClient = inject(ApiClientService);
+  private readonly toast = inject(ToastService);
 
   ngOnInit(): void {
     this.refreshSetupStatus();
@@ -63,8 +66,9 @@ export class SettingsPage implements OnInit {
   loadDemoData(): void {
     this.loadingDemo = true;
     this.actionError = null;
-    this.apiClient.post('/setup/demo', {}).subscribe({
+    this.apiClient.post('/setup/demo', { confirm: SETUP_CONFIRM_TOKEN }).subscribe({
       next: () => {
+        this.toast.success('Demo data loaded', 'The database was reset with demo fixtures.');
         this.loadingDemo = false;
         this.showDemoDialog = false;
         window.location.reload();
@@ -72,6 +76,7 @@ export class SettingsPage implements OnInit {
       error: (err) => {
         this.loadingDemo = false;
         this.actionError = err.message || 'Failed to load demo data.';
+        this.toast.error('Demo load failed', this.actionError ?? undefined);
       },
     });
   }
@@ -79,8 +84,9 @@ export class SettingsPage implements OnInit {
   startFresh(): void {
     this.loadingFresh = true;
     this.actionError = null;
-    this.apiClient.post('/setup/fresh', {}).subscribe({
+    this.apiClient.post('/setup/fresh', { confirm: SETUP_CONFIRM_TOKEN }).subscribe({
       next: () => {
+        this.toast.success('Fresh start complete', 'Transactional data was wiped.');
         this.loadingFresh = false;
         this.showFreshDialog = false;
         window.location.reload();
@@ -88,6 +94,7 @@ export class SettingsPage implements OnInit {
       error: (err) => {
         this.loadingFresh = false;
         this.actionError = err.message || 'Failed to reset database to a fresh state.';
+        this.toast.error('Fresh start failed', this.actionError ?? undefined);
       },
     });
   }

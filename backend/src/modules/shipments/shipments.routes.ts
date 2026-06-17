@@ -4,6 +4,7 @@ import { zValidator } from '@hono/zod-validator';
 import { ShipmentsService } from './shipments.service.js';
 import { parseQueryParams } from '../../utils/query.js';
 import { protect, requireWrite } from '../../middleware/protect.js';
+import { audit } from '../../services/audit.service.js';
 import type { AuthVariables } from '../../types/auth.js';
 
 const shipmentsApp = new Hono<{ Variables: AuthVariables }>();
@@ -74,9 +75,17 @@ shipmentsApp.post('/', requireWrite('shipments'), zValidator('json', shipmentCre
 shipmentsApp.put('/:id/status', requireWrite('shipments'), zValidator('json', statusUpdateSchema), async (c) => {
   const id = c.req.param('id');
   const body = c.req.valid('json');
+  const actor = c.get('appUser');
 
   try {
     const shipment = await service.updateStatus(id, body.status);
+    await audit.log({
+      userId: actor?.id,
+      action: 'status_change',
+      entity: 'shipment',
+      entityId: shipment.id,
+      metadata: { status: body.status, orderNo: shipment.orderNo },
+    });
     return c.json({
       success: true,
       data: shipment,

@@ -27,6 +27,7 @@
           <th>Category</th>
           <th>Status</th>
           <th class="text-right">Outstanding</th>
+          <th></th>
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-row>
@@ -37,6 +38,11 @@
           <td>{{ row.category }}</td>
           <td><app-status-chip [value]="row.outstanding > 0 ? 'Payable' : 'Clear'" /></td>
           <td class="text-right">{{ row.outstanding | inr }}</td>
+          <td>
+            @if (row.outstanding > 0) {
+              <button pButton type="button" icon="pi pi-wallet" class="p-button-text" label="Pay" (click)="openPayment(row)"></button>
+            }
+          </td>
         </tr>
       </ng-template>
     </p-table>
@@ -56,4 +62,27 @@
       <button pButton type="submit" label="Save" [disabled]="!form.valid"></button>
     </div>
   </form>
+</p-dialog>
+
+<p-dialog header="Record supplier payment" [modal]="true" [(visible)]="paymentDialogOpen" [style]="{ width: 'min(480px, 95vw)' }">
+  @if (selectedSupplier; as supplier) {
+    <form (ngSubmit)="savePayment()" class="p-3">
+      <p class="mb-3">Paying <strong>{{ supplier.name }}</strong> · outstanding {{ supplier.outstanding | inr }}</p>
+      <div class="field"><label>Amount (INR)</label><input pInputText type="number" min="1" [(ngModel)]="paymentForm.amount" name="amount" required class="w-full" /></div>
+      <div class="field"><label>Method</label><p-select [options]="paymentMethods" [(ngModel)]="paymentForm.method" name="method" styleClass="w-full" /></div>
+      <div class="field"><label>Notes</label><input pInputText [(ngModel)]="paymentForm.notes" name="notes" class="w-full" /></div>
+      @if (supplierPayments().length > 0) {
+        <h4>Recent payments</h4>
+        <ul>
+          @for (p of supplierPayments(); track p.id) {
+            <li>{{ p.paidAt | date: 'dd MMM yyyy' }} · {{ p.method }} · {{ p.amount | inr }}</li>
+          }
+        </ul>
+      }
+      <div class="actions-end">
+        <button pButton type="button" label="Cancel" class="p-button-outlined" (click)="paymentDialogOpen = false"></button>
+        <button pButton type="submit" label="Save payment"></button>
+      </div>
+    </form>
+  }
 </p-dialog>

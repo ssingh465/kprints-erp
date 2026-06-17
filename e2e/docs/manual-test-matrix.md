@@ -101,7 +101,7 @@ Legend: **Y** = implemented in UI (may still be partial) · **API** = backend on
 | ORD-R-01 | Read list | Open orders with default period | Seeded orders visible; period subtitle matches selector | _pending_ |
 | ORD-R-02 | Read detail | Click eye icon on an order | Dialog shows lines, balance, status, timeline | _pending_ |
 | ORD-U-01 | Update (API) | `PUT /api/orders/:id` — change status to `Design Approved` | Status updates; production job created (see workflow map) | _pending_ |
-| ORD-D-01 | Delete (API) | `DELETE /api/orders/:id` | Order removed; **verify G3** — customer counters may not decrement | _pending_ |
+| ORD-D-01 | Delete (API) | `DELETE /api/orders/:id` | Order removed; customer `orderCount` and `lifetimeValue` decrement (G3 fixed) | `customer-order.workflow.spec.ts` |
 | ORD-S-01 | Search | Search by order number fragment | Matching rows only | _pending_ |
 | ORD-F-01 | Status filter | Select `Delivered` in status dropdown | Only delivered orders shown (client-side) | _pending_ |
 | ORD-F-02 | Period filter | Change period selector | List reloads from API with period query | _pending_ |
@@ -134,7 +134,7 @@ Legend: **Y** = implemented in UI (may still be partial) · **API** = backend on
 | INV-E-01 | Export | `GET /api/reports/export?module=inventory` | CSV with supplier column | _pending_ |
 | INV-UP-01 | Upload | — | **N/A** | — |
 | INV-LINK-01 | Create purchase shortcut | Click **Create purchase** | Navigates to `/purchases?new=true` with dialog open | _pending_ |
-| INV-GAP-01 | Order consumption | Create order for poster stock | **G1** — poster/inventory stock NOT auto-decremented | _pending_ |
+| INV-GAP-01 | Order consumption | Advance order to `Printing Queued` with poster line | Poster `stock` decrements by line quantity (G1 partial — no raw-material movement yet) | `inventory-expense.workflow.spec.ts` |
 
 ---
 
@@ -156,7 +156,7 @@ Legend: **Y** = implemented in UI (may still be partial) · **API** = backend on
 | PRD-P-01 | Pagination | — | **N/A** — full list, no paginator on production table | — |
 | PRD-E-01 | Export | — | **N/A** | — |
 | PRD-UP-01 | Upload | — | **N/A** | — |
-| PRD-GAP-01 | Audit | Change stage via API | **G7** — no `audit_logs` entry for production mutations | _pending_ |
+| PRD-GAP-01 | Audit | Change stage via API | `audit_logs` entry with `action=stage_change`, `entity=production` (G7 fixed) | `production-shipment.workflow.spec.ts` |
 
 ### 4b. Print queue (production subset)
 
@@ -181,7 +181,7 @@ Legend: **Y** = implemented in UI (may still be partial) · **API** = backend on
 | SHP-C-01 | Create | **New shipment** — fill orderNo, customer, carrier, tracking, city, ETA | Row appears in table | _pending_ |
 | SHP-R-01 | Read list | Open shipments | Seeded shipments visible | _pending_ |
 | SHP-U-01 | Update status | Click **Status** → set `Delivered` | Shipment status updates; linked `orders.status` → Delivered | _pending_ |
-| SHP-U-02 | Status mirror | After deliver, check production job stage | **G8** — production stage may remain stale (`Ready for Shipping`) | _pending_ |
+| SHP-U-02 | Status mirror | After deliver, check production job stage | `production_jobs.stage` → `Delivered` (G8 fixed) | `production-shipment.workflow.spec.ts` |
 | SHP-D-01 | Delete | — | **N/A** — no delete endpoint/UI | — |
 | SHP-S-01 | Search | Search tracking or order number | Filtered rows | _pending_ |
 | SHP-F-01 | Filter | — | **N/A** | — |
@@ -200,9 +200,9 @@ Legend: **Y** = implemented in UI (may still be partial) · **API** = backend on
 |---|---|---|---|---|
 | EXP-C-01 | Create | **Record purchase** — date, category, vendor, amount, payment | Row appears; finance summary reflects expense | _pending_ |
 | EXP-R-01 | Read list | Open purchases with period | Expenses listed with Recorded status chip | _pending_ |
-| EXP-U-01 | Update | — | **N/A** — no `PUT /api/expenses/:id` (G10) | _pending_ |
+| EXP-U-01 | Update | `PUT /api/expenses/:id` — change amount/vendor | Record updates; supplier outstanding adjusted (G10 fixed) | _pending_ |
 | EXP-D-01 | Delete | Click trash on a row | Row removed from UI and DB | _pending_ |
-| EXP-D-02 | Supplier balance | Delete expense that had `supplierId` | **G10** — supplier `outstanding` may not be re-credited | _pending_ |
+| EXP-D-02 | Supplier balance | Delete expense that had `supplierId` | Supplier `outstanding` re-credited (G10 fixed) | `inventory-expense.workflow.spec.ts` |
 | EXP-S-01 | Search | Search vendor or category | Filtered rows | _pending_ |
 | EXP-F-01 | Period | Change period selector | List scoped to period from API | _pending_ |
 | EXP-SO-01 | Sort | — | **N/A** | — |
@@ -325,7 +325,7 @@ Use these when validating backend contracts during manual runs without waiting f
 | Posters | Delete | `DELETE /api/posters/:id` | 200 or 409 if referenced |
 | Inventory | Movement | `POST /api/inventory/:id/movements` | Quantity delta |
 | Production | Stage | `PUT /api/production/:id/stage` `{ "stage": "Packaging" }` | Job + order updated |
-| Expenses | Missing update | `PUT /api/expenses/:id` | **404** until G10 fixed |
+| Expenses | Update | `PUT /api/expenses/:id` | 200; supplier outstanding delta applied |
 
 ---
 

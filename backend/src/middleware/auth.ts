@@ -1,6 +1,7 @@
 import type { AppRole } from '@prisma/client';
 import type { Context, Next } from 'hono';
 import { supabaseAdmin } from '../lib/supabase-admin.js';
+import { config } from '../config/index.js';
 import { prisma } from '../lib/prisma.js';
 import type { AuthVariables } from '../types/auth.js';
 
@@ -48,7 +49,7 @@ function isDemoRequest(c: Context): boolean {
  * Does NOT block — downstream middleware decides.
  */
 export async function optionalAuth(c: AuthContext, next: Next): Promise<void | Response> {
-  if (isDemoRequest(c)) {
+  if (isDemoRequest(c) && config.nodeEnv !== 'production') {
     const settings = await prisma.settings.findFirst();
     if (settings?.demoMode) {
       c.set('isDemo', true);
@@ -121,7 +122,7 @@ export async function requireApprovedUser(c: AuthContext, next: Next): Promise<v
  * Requires either demo mode (flagged by optionalAuth) or a valid authenticated profile.
  */
 export async function requireAuthOrDemo(c: AuthContext, next: Next): Promise<void | Response> {
-  if (c.get('isDemo')) return next();
+  if (c.get('isDemo') && config.nodeEnv !== 'production') return next();
 
   if (!c.get('authUser') || !c.get('appUser')) {
     return c.json(
@@ -140,7 +141,7 @@ export async function requireApprovedUnlessDemo(
   c: AuthContext,
   next: Next
 ): Promise<void | Response> {
-  if (c.get('isDemo')) return next();
+  if (c.get('isDemo') && config.nodeEnv !== 'production') return next();
   return requireApprovedUser(c, next);
 }
 
@@ -149,7 +150,7 @@ export async function requireApprovedUnlessDemo(
  */
 export function requireRole(...roles: AppRole[]) {
   return async (c: AuthContext, next: Next): Promise<void | Response> => {
-    if (c.get('isDemo')) return next();
+    if (c.get('isDemo') && config.nodeEnv !== 'production') return next();
 
     const appUser = c.get('appUser');
     if (!appUser) {

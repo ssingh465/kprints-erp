@@ -134,11 +134,15 @@ model Order {
   dueDate       DateTime        @map("due_date")
   total         Float
   paid          Float           @default(0)
+  discount      Float           @default(0)
+  couponId      String?         @map("coupon_id") @db.Uuid
+  coupon        Coupon?         @relation(fields: [couponId], references: [id])
   lines         OrderItem[]
   productionJob ProductionJob?
   shipment      Shipment?
   invoices      Invoice[]
   artworks      ArtworkUpload[]
+  payments      OrderPayment[]
 
   @@map("orders")
 }
@@ -171,6 +175,7 @@ model Supplier {
   outstanding    Float           @default(0)
   inventoryItems InventoryItem[]
   expenses       Expense[]
+  payments       SupplierPayment[]
 
   @@map("suppliers")
 }
@@ -260,12 +265,15 @@ model Shipment {
 }
 
 model Coupon {
-  id        String   @id @default(uuid()) @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  code      String   @unique
-  discount  Float
-  active    Boolean  @default(true)
+  id         String   @id @default(uuid()) @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  code       String   @unique
+  discount   Float
+  active     Boolean  @default(true)
+  usageCount Int      @default(0) @map("usage_count")
+  usageLimit Int?     @map("usage_limit")
+  orders     Order[]
 
   @@map("coupons")
 }
@@ -313,9 +321,10 @@ model ArtworkUpload {
   updatedAt DateTime @updatedAt @map("updated_at")
   orderId   String   @map("order_id") @db.Uuid
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  fileName  String   @map("file_name")
-  fileUrl   String   @map("file_url")
-  mimeType  String   @map("mime_type")
+  fileName    String   @map("file_name")
+  fileUrl     String   @map("file_url")
+  storagePath String?  @map("storage_path")
+  mimeType    String   @map("mime_type")
 
   @@map("artwork_uploads")
 }
@@ -334,13 +343,58 @@ model DashboardSnapshot {
 }
 
 model Settings {
-  id             String   @id @default(uuid()) @db.Uuid
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-  companyName    String   @default("KPrints") @map("company_name")
-  currency       String   @default("INR")
-  setupCompleted Boolean  @default(false) @map("setup_completed")
-  demoMode       Boolean  @default(false) @map("demo_mode")
+  id                  String   @id @default(uuid()) @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  companyName         String   @default("KPrints") @map("company_name")
+  currency            String   @default("INR")
+  setupCompleted      Boolean  @default(false) @map("setup_completed")
+  demoMode            Boolean  @default(false) @map("demo_mode")
+  defaultCarrier      String   @default("Delhivery") @map("default_carrier")
+  defaultShipmentCity String   @default("Delhi") @map("default_shipment_city")
+  serialOrderBase     Int      @default(1048) @map("serial_order_base")
+  serialJobBase       Int      @default(500) @map("serial_job_base")
+  serialInvoiceBase   Int      @default(1000) @map("serial_invoice_base")
+  setupInProgress     Boolean  @default(false) @map("setup_in_progress")
 
   @@map("settings")
+}
+
+model OrderPayment {
+  id         String   @id @default(uuid()) @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  orderId    String   @map("order_id") @db.Uuid
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount     Float
+  receivedAt DateTime @map("received_at")
+  method     String
+  notes      String?
+
+  @@map("order_payments")
+}
+
+model SupplierPayment {
+  id         String   @id @default(uuid()) @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  supplierId String   @map("supplier_id") @db.Uuid
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  amount     Float
+  paidAt     DateTime @map("paid_at")
+  method     String
+  notes      String?
+
+  @@map("supplier_payments")
+}
+
+model RequestIdempotency {
+  id           String   @id @default(uuid()) @db.Uuid
+  key          String   @unique
+  method       String
+  path         String
+  statusCode   Int      @map("status_code")
+  responseBody Json     @map("response_body")
+  createdAt    DateTime @default(now()) @map("created_at")
+  expiresAt    DateTime @map("expires_at")
+
+  @@map("request_idempotency")
 }

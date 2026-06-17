@@ -52,6 +52,10 @@ export class TestDbHelper {
     return this.prisma.inventoryItem.findUnique({ where: { id } });
   }
 
+  getSupplier(id: string) {
+    return this.prisma.supplier.findUnique({ where: { id } });
+  }
+
   countInventoryMovements(reference?: string) {
     return this.prisma.inventoryMovement.count({
       where: reference ? { reference } : undefined,

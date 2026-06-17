@@ -1,5 +1,6 @@
 import type { AppRole } from '@prisma/client';
 import type { Next } from 'hono';
+import { config } from '../config/index.js';
 import type { AuthContext } from '../middleware/auth.js';
 
 export type AccessLevel = 'RW' | 'R' | '-';
@@ -41,7 +42,7 @@ export function canWriteModule(role: AppRole | undefined, module: string): boole
 
 export function requireModuleAccess(module: string) {
   return async (c: AuthContext, next: Next): Promise<void | Response> => {
-    if (c.get('isDemo')) return next();
+    if (c.get('isDemo') && config.nodeEnv !== 'production') return next();
 
     const appUser = c.get('appUser');
     if (!appUser) {
@@ -68,7 +69,7 @@ export function requireModuleAccess(module: string) {
 
 export function requireModuleWrite(module: string) {
   return async (c: AuthContext, next: Next): Promise<void | Response> => {
-    if (c.get('isDemo')) return next();
+    if (c.get('isDemo') && config.nodeEnv !== 'production') return next();
 
     const appUser = c.get('appUser');
     if (!appUser) {

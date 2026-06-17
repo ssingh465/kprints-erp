@@ -9,6 +9,7 @@ import { TableModule } from 'primeng/table';
 import { TooltipModule } from 'primeng/tooltip';
 import { ApiClientService } from '../../../../core/services/api-client.service';
 import { ErpDataService } from '../../../../core/services/erp-data.service';
+import { ToastService } from '../../../../core/services/toast.service';
 import { ArtworkUpload, Order } from '../../../../models/erp.models';
 import { TablePanelSkeleton } from '../../../../shared/components/table-panel-skeleton/table-panel-skeleton';
 
@@ -22,6 +23,7 @@ import { TablePanelSkeleton } from '../../../../shared/components/table-panel-sk
 export class ArtworkUploadsPage {
   private readonly data = inject(ErpDataService);
   private readonly api = inject(ApiClientService);
+  private readonly toast = inject(ToastService);
 
   readonly search = signal('');
   readonly loading = computed(() => this.data.artworks.loading() || this.data.orders.loading());
@@ -69,10 +71,14 @@ export class ArtworkUploadsPage {
 
     this.api.upload<ArtworkUpload>('/upload', formData).subscribe({
       next: () => {
+        this.toast.success('Artwork uploaded', this.selectedFile?.name ?? 'File stored successfully.');
         this.data.artworks.refresh();
         this.uploadOpen = false;
       },
-      error: (err) => console.error('Upload failed', err),
+      error: (err) => {
+        const detail = err?.error?.message ?? err?.message ?? 'Please try again.';
+        this.toast.error('Upload failed', detail);
+      },
     });
   }
 

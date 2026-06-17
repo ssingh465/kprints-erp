@@ -230,6 +230,41 @@
       </div>
       }
     </section>
+
+    <section class="erp-panel">
+      <h2>Invoices</h2>
+      <p class="chart-period-note">Order invoices created from the Orders screen or API.</p>
+      @if (invoicesLoading()) {
+        <app-table-panel-skeleton [rows]="5" [showToolbar]="false" />
+      } @else if (invoices().length === 0) {
+        <p class="muted">No invoices yet. Create one from an order detail.</p>
+      } @else {
+      <div class="app-table-wrapper">
+      <p-table [value]="invoices()" [tableStyle]="{ 'min-width': '620px' }" [scrollable]="true" styleClass="app-table p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Invoice No</th>
+            <th>Order</th>
+            <th>Customer</th>
+            <th class="text-right">Amount</th>
+            <th></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-invoice>
+          <tr>
+            <td><strong>{{ invoice.invoiceNo }}</strong></td>
+            <td>{{ invoice.order?.orderNo || invoice.orderId }}</td>
+            <td>{{ invoice.order?.customerName || '—' }}</td>
+            <td class="text-right">{{ invoice.amount | inr }}</td>
+            <td>
+              <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger" (click)="deleteInvoice(invoice)"></button>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+      </div>
+      }
+    </section>
   </div>
 </section>
 

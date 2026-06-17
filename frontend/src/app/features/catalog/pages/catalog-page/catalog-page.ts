@@ -9,7 +9,8 @@ import { TableModule } from 'primeng/table';
 import { ApiClientService } from '../../../../core/services/api-client.service';
 import { ErpDataService } from '../../../../core/services/erp-data.service';
 import { PeriodService } from '../../../../core/services/period.service';
-import { Poster, PosterListResponse } from '../../../../models/erp.models';
+import { ToastService } from '../../../../core/services/toast.service';
+import { Poster, PosterCategory, PosterListResponse } from '../../../../models/erp.models';
 import { PeriodSelector } from '../../../../shared/components/period-selector/period-selector';
 import { StatusChip } from '../../../../shared/components/status-chip/status-chip';
 import { TablePanelSkeleton } from '../../../../shared/components/table-panel-skeleton/table-panel-skeleton';
@@ -38,12 +39,16 @@ export class CatalogPage implements OnInit {
   private readonly data = inject(ErpDataService);
   private readonly api = inject(ApiClientService);
   private readonly period = inject(PeriodService);
+  private readonly toast = inject(ToastService);
 
   readonly search = signal('');
   readonly posters = signal<Poster[]>([]);
+  readonly categories = signal<PosterCategory[]>([]);
   readonly loading = signal(false);
   readonly salesColumnLabel = computed(() => this.period.salesColumnLabel());
   readonly periodLabel = computed(() => this.period.label());
+
+  readonly categoryNames = computed(() => this.categories().map((c) => c.name));
 
   readonly filtered = computed(() => {
     const query = this.search().toLowerCase();
@@ -55,19 +60,14 @@ export class CatalogPage implements OnInit {
     );
   });
 
-  readonly posterCategories = [
-    'Minimalist',
-    'Anime & Manga',
-    'Vintage & Retro',
-    'Typography',
-    'Nature & Travel',
-  ];
-
   addPosterOpen = false;
+  categoriesDialogOpen = false;
+  newCategoryName = '';
   newPoster = this.emptyPoster();
 
   ngOnInit(): void {
     this.loadPosters();
+    this.loadCategories();
   }
 
   onPeriodChange(): void {
@@ -89,6 +89,13 @@ export class CatalogPage implements OnInit {
     });
   }
 
+  private loadCategories(): void {
+    this.api.get<PosterCategory[]>('/poster-categories').subscribe({
+      next: (items) => this.categories.set(items),
+      error: () => this.categories.set([]),
+    });
+  }
+
   private emptyPoster(): Partial<Poster> {
     return {
       sku: '',
@@ -106,7 +113,42 @@ export class CatalogPage implements OnInit {
     const randNo = Math.floor(1000 + Math.random() * 9000);
     this.newPoster = this.emptyPoster();
     this.newPoster.sku = `PST-${randNo}`;
+    const names = this.categoryNames();
+    if (names.length > 0) {
+      this.newPoster.category = names[0];
+    }
     this.addPosterOpen = true;
+  }
+
+  openCategoriesDialog(): void {
+    this.newCategoryName = '';
+    this.categoriesDialogOpen = true;
+  }
+
+  saveCategory(): void {
+    const name = this.newCategoryName.trim();
+    if (name.length < 2) return;
+
+    this.api.post<PosterCategory>('/poster-categories', { name }).subscribe({
+      next: () => {
+        this.toast.success('Category added', name);
+        this.newCategoryName = '';
+        this.loadCategories();
+      },
+      error: (err) => this.toast.error('Category failed', err.message || 'Could not save category.'),
+    });
+  }
+
+  deleteCategory(category: PosterCategory): void {
+    if (!confirm(`Delete category "${category.name}"?`)) return;
+
+    this.api.delete(`/poster-categories/${category.id}`).subscribe({
+      next: () => {
+        this.toast.success('Category deleted', category.name);
+        this.loadCategories();
+      },
+      error: (err) => this.toast.error('Delete failed', err.message || 'Could not delete category.'),
+    });
   }
 
   savePoster(): void {

@@ -6,6 +6,7 @@ import {
   type AuthContext,
 } from './auth.js';
 import { requireModuleAccess, requireModuleWrite } from '../auth/role-access.js';
+import { config } from '../config/index.js';
 import { prisma } from '../lib/prisma.js';
 import type { AppUserContext } from '../types/auth.js';
 
@@ -37,7 +38,7 @@ export function protectSetupMutation(): MiddlewareHandler[] {
 }
 
 async function requireDemoSeedAccess(c: AuthContext, next: Next): Promise<void | Response> {
-  if (c.get('isDemo')) return next();
+  if (c.get('isDemo') && config.nodeEnv !== 'production') return next();
 
   const appUser = c.get('appUser');
   if (appUser) {
@@ -56,7 +57,7 @@ async function requireDemoSeedAccess(c: AuthContext, next: Next): Promise<void |
 }
 
 async function requireDemoOrSuperAdmin(c: AuthContext, next: Next): Promise<void | Response> {
-  if (c.get('isDemo')) return next();
+  if (c.get('isDemo') && config.nodeEnv !== 'production') return next();
 
   const appUser = c.get('appUser');
   if (!appUser) {

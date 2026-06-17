@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js';
 import { dateInPeriod, ResolvedPeriod } from '../../utils/period.js';
+import type { Prisma } from '@prisma/client';
 
 export class ExpensesService {
   async list(options: {
@@ -10,7 +11,7 @@ export class ExpensesService {
     period?: ResolvedPeriod;
   }) {
     const { search, category, skip, take, period } = options;
-    const where: any = {};
+    const where: Prisma.ExpenseWhereInput = {};
 
     if (period) {
       Object.assign(where, dateInPeriod(period));
@@ -85,8 +86,79 @@ export class ExpensesService {
   }
 
   async delete(id: string) {
-    return prisma.expense.delete({
-      where: { id }
+    return prisma.$transaction(async (tx) => {
+      const expense = await tx.expense.findUnique({ where: { id } });
+      if (!expense) {
+        throw new Error('Expense not found');
+      }
+
+      if (expense.supplierId) {
+        await tx.supplier.update({
+          where: { id: expense.supplierId },
+          data: {
+            outstanding: { increment: expense.amount },
+          },
+        });
+      }
+
+      return tx.expense.delete({ where: { id } });
+    });
+  }
+
+  async update(
+    id: string,
+    data: Partial<{
+      date: string | Date;
+      category: string;
+      vendor: string;
+      supplierId?: string | null;
+      amount: number;
+      paymentMode: string;
+      notes?: string;
+    }>
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.expense.findUnique({ where: { id } });
+      if (!existing) {
+        throw new Error('Expense not found');
+      }
+
+      if (existing.supplierId) {
+        await tx.supplier.update({
+          where: { id: existing.supplierId },
+          data: {
+            outstanding: { increment: existing.amount },
+          },
+        });
+      }
+
+      const updated = await tx.expense.update({
+        where: { id },
+        data: {
+          date: data.date ? new Date(data.date) : undefined,
+          category: data.category,
+          vendor: data.vendor,
+          supplierId: data.supplierId === undefined ? undefined : data.supplierId,
+          amount: data.amount,
+          paymentMode: data.paymentMode,
+          notes: data.notes,
+        },
+      });
+
+      const nextSupplierId =
+        data.supplierId !== undefined ? data.supplierId : existing.supplierId;
+      const nextAmount = data.amount !== undefined ? data.amount : existing.amount;
+
+      if (nextSupplierId) {
+        await tx.supplier.update({
+          where: { id: nextSupplierId },
+          data: {
+            outstanding: { decrement: nextAmount },
+          },
+        });
+      }
+
+      return updated;
     });
   }
 }

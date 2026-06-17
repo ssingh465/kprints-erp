@@ -2,7 +2,6 @@
  * W1 + W2 — Customer → Order
  *
  * Asserts UI, API, and DB agree after creating a customer and placing an order.
- * Documents gap G3 on order delete (counter drift).
  */
 
 import {
@@ -69,17 +68,17 @@ test.describe('Workflow W1–W2: Customer → Order', () => {
     await expect(page.getByText(customer.name)).toBeVisible();
   });
 
-  test('deleting order does not reverse customer counters (gap G3 — current behaviour)', async ({ api, db }) => {
+  test('deleting order reverses customer counters (G3 fixed)', async ({ api, db }) => {
     const customer = await createCustomer(api);
     const order = await createOrder(api, {
       customerId: customer.id,
-      lines: [{ description: 'Delete drift test', size: 'A3', quantity: 1, unitPrice: 1000 }],
+      lines: [{ description: 'Delete counter test', size: 'A3', quantity: 1, unitPrice: 1000 }],
     });
 
     await api.delete(`/orders/${order.id}`);
 
     const after = await db.getCustomer(customer.id);
-    expect(after?.orderCount).toBe(1);
-    expect(after?.lifetimeValue).toBe(1000);
+    expect(after?.orderCount).toBe(0);
+    expect(after?.lifetimeValue).toBe(0);
   });
 });

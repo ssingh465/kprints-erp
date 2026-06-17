@@ -239,35 +239,35 @@ Owner-area legend (used in the table below to route each gap without baking sequ
 
 | ID | Severity | Owner area | Status |
 |---|---|---|---|
-| G1 — Order ↔ Inventory | P0 | Workflow E2E (critical-fix candidate) | Open |
-| G2 — orderNo race | P0 | API contract + fix | Open |
-| G3 — Customer counter drift | P0 | Workflow E2E + fix | Open |
-| G4 — Demo bypass | P0 | RBAC + middleware review | Open |
-| G5 — Invoice API | P1 | UX feedback / Readiness audit | Open |
-| G6 — Coupons orphaned | P1 | Workflow E2E / UX feedback | Open |
-| G7 — Audit gaps (prod/ship/upload) | P1 | DB validation | Open |
-| G8 — Shipment delivered ⇒ stale job | P1 | Workflow E2E | Open |
-| G9 — Order Ready-for-Pickup ⇒ stale job | P1 | Workflow E2E | Open |
-| G10 — Expense delete doesn't credit | P1 | Workflow E2E | Open |
-| G11 — Purchases is just expenses | P1 | Readiness audit | Open |
-| G12 — Artwork delete missing | P1 | Uploads | Open |
-| G13 — Operator free-text | P1 | Workflow E2E / UX feedback | Open |
-| G14 — Toast inconsistency | P2 | UX feedback | Open |
-| G15 — Limited CSV export | P2 | UX feedback | Open |
-| G16 — PosterCategory unused | P2 | Readiness audit | Open |
-| G17 — Demo seed not idempotent | P2 | Test infra | Open |
-| G18 — No rate limiting | P2 | Error handling | Open |
-| G19 — Idempotency keys | P2 | API contract / Error handling | Open |
-| G20 — No AR/AP module | P2 | Readiness audit | Open |
-| G21 — Prisma pool review | P2 | API contract / Performance | Open |
-| G22 — Supabase service key exposure | P2 | API contract (verify) | Open |
-| G23 — OpenAPI gaps | P2 | API contract | Open |
-| G24 — Operator sentinel | P3 | UX feedback | Open |
-| G25 — Hardcoded carrier/city | P3 | UX feedback | Open |
-| G26 — Magic numbering offsets | P3 | UX feedback | Open |
-| G27 — `any` in service filters | P3 | API contract | Open |
-| G28 — Status enum duplication | P3 | Workflow E2E / UX feedback | Open |
-| G29 — Operations fallback route | P3 | UX feedback | Open |
+| G1 — Order ↔ Inventory | P0 | Workflow E2E | **Fixed** — poster stock + SKU-linked inventory movements |
+| G2 — orderNo race | P0 | API contract + fix | **Fixed** — max-serial generation inside transaction |
+| G3 — Customer counter drift | P0 | Workflow E2E + fix | **Fixed** |
+| G4 — Demo bypass | P0 | RBAC + middleware review | **Fixed** — demo header ignored in production |
+| G5 — Invoice API | P1 | UX feedback / Readiness audit | **Fixed** — `POST/GET/DELETE /api/invoices` |
+| G6 — Coupons orphaned | P1 | Workflow E2E / UX feedback | **Fixed** — `couponCode` on order create applies discount |
+| G7 — Audit gaps (prod/ship/upload) | P1 | DB validation | **Fixed** |
+| G8 — Shipment delivered ⇒ stale job | P1 | Workflow E2E | **Fixed** |
+| G9 — Order Ready-for-Pickup ⇒ stale job | P1 | Workflow E2E | **Fixed** |
+| G10 — Expense delete doesn't credit | P1 | Workflow E2E | **Fixed** |
+| G11 — Purchases is just expenses | P1 | Readiness audit | **Fixed** — UI renamed to Purchase Ledger |
+| G12 — Artwork delete missing | P1 | Uploads | **Fixed** — `DELETE /api/artworks/:id` + storage cleanup |
+| G13 — Operator free-text | P1 | Workflow E2E / UX feedback | **Fixed** — validates against production team users |
+| G14 — Toast inconsistency | P2 | UX feedback | **Fixed** — ToastService + repository + key pages |
+| G15 — Limited CSV export | P2 | UX feedback | **Fixed** — period filter + posters/shipments/production/partners/audit-logs |
+| G16 — PosterCategory unused | P2 | Readiness audit | **Fixed** — `/api/poster-categories` + catalog UI |
+| G17 — Demo seed not idempotent | P2 | Test infra | **Fixed** — setup lock + transactional wipe |
+| G18 — No rate limiting | P2 | Error handling | **Fixed** — setup (1/min) + upload (30/min) |
+| G19 — Idempotency keys | P2 | API contract / Error handling | **Fixed** — orders, expenses, payments POST |
+| G20 — No AR/AP module | P2 | Readiness audit | **Fixed** — order + supplier payments API + UI |
+| G21 — Prisma pool review | P2 | API contract / Performance | **Verified** — singleton via globalThis |
+| G22 — Supabase service key exposure | P2 | API contract (verify) | **Fixed** — lazy guard; frontend env has anon key only |
+| G23 — OpenAPI gaps | P2 | API contract | **Fixed** — expanded `/api/openapi.json` |
+| G24 — Operator sentinel | P3 | UX feedback | **Fixed** — nullable operator (null) |
+| G25 — Hardcoded carrier/city | P3 | UX feedback | **Fixed** — Settings defaults via shipment-defaults |
+| G26 — Magic numbering offsets | P3 | UX feedback | **Fixed** — serial helper with configurable defaults |
+| G27 — `any` in service filters | P3 | API contract | **Fixed** — Prisma WhereInput types |
+| G28 — Status enum duplication | P3 | Workflow E2E / UX feedback | **Fixed** — `constants/stages.ts` |
+| G29 — Operations fallback route | P3 | UX feedback | **Fixed** — wildcard redirects to dashboard |
 
 This backlog rolls into the production-readiness report.
 

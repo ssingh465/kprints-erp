@@ -1,6 +1,7 @@
 import { prisma } from '../../lib/prisma.js';
 import { ResolvedPeriod } from '../../utils/period.js';
 import { applyPosterSales, getPosterSalesInPeriod } from '../../utils/poster-sales.js';
+import type { Prisma } from '@prisma/client';
 
 export class PostersService {
   async list(options: {
@@ -15,7 +16,7 @@ export class PostersService {
   }) {
     const { search, category, active, skip, take, sortBy, sortOrder, period } = options;
 
-    const where: any = {};
+    const where: Prisma.PosterWhereInput = {};
 
     if (search) {
       where.OR = [

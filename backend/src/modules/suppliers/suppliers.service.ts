@@ -1,9 +1,10 @@
 import { prisma } from '../../lib/prisma.js';
+import type { Prisma } from '@prisma/client';
 
 export class SuppliersService {
   async list(options: { search?: string; skip?: number; take?: number }) {
     const { search, skip, take } = options;
-    const where: any = {};
+    const where: Prisma.SupplierWhereInput = {};
 
     if (search) {
       where.OR = [

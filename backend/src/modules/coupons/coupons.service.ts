@@ -1,9 +1,10 @@
 import { prisma } from '../../lib/prisma.js';
+import type { Prisma } from '@prisma/client';
 
 export class CouponsService {
   async list(options: { search?: string; skip?: number; take?: number }) {
     const { search, skip, take } = options;
-    const where: any = {};
+    const where: Prisma.CouponWhereInput = {};
 
     if (search) {
       where.code = { contains: search, mode: 'insensitive' };

@@ -7,8 +7,8 @@ import { parsePeriodFromQuery, serializePeriod } from '../../utils/period.js';
 import { parseQueryParams } from '../../utils/query.js';
 import { protect, requireWrite } from '../../middleware/protect.js';
 import { audit } from '../../services/audit.service.js';
+import { replayIdempotentResponse, storeIdempotentResponse } from '../../utils/idempotency.js';
 import type { AuthVariables } from '../../types/auth.js';
-import type { AuthContext } from '../../middleware/auth.js';
 
 const expensesApp = new Hono<{ Variables: AuthVariables }>();
 const service = new ExpensesService();
@@ -26,6 +26,8 @@ const expenseCreateSchema = z.object({
   }),
   notes: z.string().optional()
 });
+
+const expenseUpdateSchema = expenseCreateSchema.partial();
 
 // List Expenses
 expensesApp.get('/', async (c) => {
@@ -71,6 +73,14 @@ expensesApp.get('/', async (c) => {
 expensesApp.post('/', requireWrite('purchases'), zValidator('json', expenseCreateSchema), async (c) => {
   const body = c.req.valid('json');
   const actor = c.get('appUser');
+  const idempotencyKey = c.req.header('Idempotency-Key');
+
+  const replay = await replayIdempotentResponse(idempotencyKey);
+  if (replay) {
+    c.header('Idempotency-Replayed', 'true');
+    return c.json(replay.body, replay.statusCode as 201);
+  }
+
   try {
     const expense = await service.create({
       ...body,
@@ -83,23 +93,65 @@ expensesApp.post('/', requireWrite('purchases'), zValidator('json', expenseCreat
       entityId: expense.id,
       metadata: { vendor: expense.vendor, amount: expense.amount },
     });
-    return c.json({
+    const payload = {
       success: true,
       data: expense,
       message: 'Expense recorded successfully'
-    }, 201);
-  } catch (error: any) {
+    };
+    await storeIdempotentResponse(idempotencyKey, c.req.method, c.req.path, 201, payload);
+    return c.json(payload, 201);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Expense record failed';
     return c.json({
       success: false,
       error: 'ExpenseRecordError',
-      message: error.message
+      message
+    }, 400);
+  }
+});
+
+// Update Expense
+expensesApp.put('/:id', requireWrite('purchases'), zValidator('json', expenseUpdateSchema), async (c) => {
+  const id = c.req.param('id') as string;
+  const body = c.req.valid('json');
+  const actor = c.get('appUser');
+
+  try {
+    const expense = await service.update(id, {
+      ...body,
+      supplierId: body.supplierId === undefined ? undefined : body.supplierId,
+    });
+    await audit.log({
+      userId: actor?.id,
+      action: 'update',
+      entity: 'expense',
+      entityId: expense.id,
+      metadata: { vendor: expense.vendor, amount: expense.amount },
+    });
+    return c.json({
+      success: true,
+      data: expense,
+      message: 'Expense updated successfully',
+    });
+  } catch (error: any) {
+    if (error.message === 'Expense not found') {
+      return c.json({
+        success: false,
+        error: 'NotFound',
+        message: 'Expense not found',
+      }, 404);
+    }
+    return c.json({
+      success: false,
+      error: 'ExpenseUpdateError',
+      message: error.message,
     }, 400);
   }
 });
 
 // Delete Expense
-expensesApp.delete('/:id', requireWrite('purchases'), async (c: AuthContext) => {
-  const id = c.req.param('id') as string;
+expensesApp.delete('/:id', requireWrite('purchases'), async (c) => {
+  const id = c.req.param('id');
   const actor = c.get('appUser');
   const existing = await prisma.expense.findUnique({ where: { id } });
 

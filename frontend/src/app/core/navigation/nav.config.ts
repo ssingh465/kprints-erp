@@ -37,7 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Commercial',
     items: [
       { label: 'Finance', icon: 'pi pi-indian-rupee', route: '/finance', module: 'finance' },
-      { label: 'Purchases', icon: 'pi pi-receipt', route: '/purchases', module: 'purchases' },
+      { label: 'Purchase Ledger', icon: 'pi pi-receipt', route: '/purchases', module: 'purchases' },
       { label: 'Vendors', icon: 'pi pi-briefcase', route: '/vendors', module: 'vendors' },
       { label: 'Coupons', icon: 'pi pi-ticket', route: '/coupons', module: 'coupons' },
       { label: 'Reports', icon: 'pi pi-chart-line', route: '/reports', module: 'reports' },

@@ -1,9 +1,10 @@
 import { prisma } from '../../lib/prisma.js';
+import { removeArtworkStorage, removeArtworkStorageByUrl } from '../../utils/artwork-storage.js';
 
 export class ArtworksService {
   async list(options: { search?: string; skip?: number; take?: number }) {
     const { search, skip, take } = options;
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (search) {
       where.OR = [
@@ -27,5 +28,38 @@ export class ArtworksService {
     ]);
 
     return { items, total };
+  }
+
+  async getById(id: string) {
+    return prisma.artworkUpload.findUnique({
+      where: { id },
+      include: {
+        order: { select: { orderNo: true, customerName: true, status: true } },
+      },
+    });
+  }
+
+  async delete(id: string) {
+    const artwork = await prisma.artworkUpload.findUnique({ where: { id } });
+    if (!artwork) {
+      throw new Error('Artwork upload not found');
+    }
+
+    await removeArtworkStorage(artwork.storagePath);
+    if (!artwork.storagePath) {
+      await removeArtworkStorageByUrl(artwork.fileUrl);
+    }
+
+    return prisma.artworkUpload.delete({ where: { id } });
+  }
+
+  async deleteByOrderId(orderId: string): Promise<void> {
+    const artworks = await prisma.artworkUpload.findMany({ where: { orderId } });
+    for (const artwork of artworks) {
+      await removeArtworkStorage(artwork.storagePath);
+      if (!artwork.storagePath) {
+        await removeArtworkStorageByUrl(artwork.fileUrl);
+      }
+    }
   }
 }

@@ -1,5 +1,17 @@
+import { PRODUCTION_JOB_CREATE_STAGES, PRODUCTION_JOB_STAGES } from '../../constants/stages.js';
+import { ArtworksService } from '../artworks/artworks.service.js';
 import { prisma } from '../../lib/prisma.js';
 import { createdAtInPeriod, ResolvedPeriod } from '../../utils/period.js';
+import {
+  applyStockConsumption,
+  consumesStock,
+  restoreStockConsumption,
+  syncCustomerStats,
+} from '../../utils/order-inventory.js';
+import { nextSerialNumber } from '../../utils/serial-numbers.js';
+import { getShipmentDefaults } from '../../utils/shipment-defaults.js';
+
+const artworksService = new ArtworksService();
 
 export class OrdersService {
   async list(options: {
@@ -14,7 +26,7 @@ export class OrdersService {
   }) {
     const { search, status, priority, skip, take, sortBy, sortOrder, period } = options;
 
-    const where: any = {};
+    const where: Record<string, unknown> = {};
 
     if (period) {
       Object.assign(where, createdAtInPeriod(period));
@@ -24,7 +36,7 @@ export class OrdersService {
       where.OR = [
         { orderNo: { contains: search, mode: 'insensitive' } },
         { customerName: { contains: search, mode: 'insensitive' } },
-        { type: { contains: search, mode: 'insensitive' } }
+        { type: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -42,11 +54,9 @@ export class OrdersService {
         skip,
         take,
         orderBy: { [sortBy || 'createdAt']: sortOrder || 'desc' },
-        include: {
-          lines: true
-        }
+        include: { lines: true },
       }),
-      prisma.order.count({ where })
+      prisma.order.count({ where }),
     ]);
 
     return { items, total };
@@ -60,8 +70,10 @@ export class OrdersService {
         productionJob: true,
         shipment: true,
         artworks: true,
-        invoices: true
-      }
+        invoices: true,
+        coupon: true,
+        payments: true,
+      },
     });
   }
 
@@ -74,6 +86,7 @@ export class OrdersService {
     dueDate: string | Date;
     total: number;
     paid?: number;
+    couponCode?: string;
     lines: Array<{
       posterId?: string | null;
       description: string;
@@ -84,22 +97,40 @@ export class OrdersService {
     }>;
   }) {
     return prisma.$transaction(async (tx) => {
-      // 1. Resolve Customer
-      const customer = await tx.customer.findUnique({
-        where: { id: data.customerId }
-      });
+      const customer = await tx.customer.findUnique({ where: { id: data.customerId } });
       if (!customer) {
         throw new Error('Customer not found');
       }
 
-      // 2. Generate Serial Order No (e.g. ORD-1052)
-      const count = await tx.order.count();
-      const orderNo = `ORD-${1048 + count + 1}`;
+      let discount = 0;
+      let couponId: string | null = null;
+      if (data.couponCode) {
+        const coupon = await tx.coupon.findUnique({
+          where: { code: data.couponCode.toUpperCase() },
+        });
+        if (!coupon?.active) {
+          throw new Error('Invalid or inactive coupon code');
+        }
+        if (coupon.usageLimit != null && coupon.usageCount >= coupon.usageLimit) {
+          throw new Error('Coupon usage limit reached');
+        }
+        discount = Math.min(data.total, coupon.discount);
+        couponId = coupon.id;
+        await tx.coupon.update({
+          where: { id: coupon.id },
+          data: { usageCount: { increment: 1 } },
+        });
+      }
 
+      const orderNo = await nextSerialNumber(tx, 'ORD');
+      const orderTotal = Math.max(0, data.total - discount);
       const status = data.status || 'Draft';
       const priority = data.priority || 'Normal';
+      const lineInputs = data.lines.map((line) => ({
+        posterId: line.posterId || null,
+        quantity: line.quantity,
+      }));
 
-      // 3. Create Order & nested items
       const order = await tx.order.create({
         data: {
           orderNo,
@@ -110,40 +141,39 @@ export class OrdersService {
           status,
           priority,
           dueDate: new Date(data.dueDate),
-          total: data.total,
+          total: orderTotal,
           paid: data.paid ?? 0,
+          discount,
+          couponId,
           lines: {
             createMany: {
-              data: data.lines.map(line => ({
+              data: data.lines.map((line) => ({
                 posterId: line.posterId || null,
                 description: line.description,
                 size: line.size,
                 quantity: line.quantity,
                 unitPrice: line.unitPrice,
-                framing: line.framing || 'No frame'
-              }))
-            }
-          }
+                framing: line.framing || 'No frame',
+              })),
+            },
+          },
         },
-        include: {
-          lines: true
-        }
+        include: { lines: true },
       });
 
-      // 4. Update Customer Stats
       await tx.customer.update({
         where: { id: customer.id },
         data: {
           orderCount: { increment: 1 },
-          lifetimeValue: { increment: data.total }
-        }
+          lifetimeValue: { increment: orderTotal },
+        },
       });
 
-      // 5. Handle initial production job creation
-      if (['Design Approved', 'Printing Queued', 'Printing In Progress', 'Lamination', 'Framing', 'Packaging'].includes(status)) {
+      if ((PRODUCTION_JOB_CREATE_STAGES as readonly string[]).includes(status)) {
+        const jobNo = await nextSerialNumber(tx, 'JOB');
         await tx.productionJob.create({
           data: {
-            jobNo: `JOB-${500 + count + 1}`,
+            jobNo,
             orderId: order.id,
             orderNo: order.orderNo,
             customerName: order.customerName,
@@ -151,9 +181,13 @@ export class OrdersService {
             priority: order.priority,
             size: data.lines[0]?.size || 'A3',
             material: data.lines[0]?.framing || 'Matte paper',
-            operator: 'Operator Unassigned'
-          }
+            operator: null,
+          },
         });
+      }
+
+      if (consumesStock(status)) {
+        await applyStockConsumption(tx, lineInputs, order.orderNo);
       }
 
       return order;
@@ -173,7 +207,7 @@ export class OrdersService {
     return prisma.$transaction(async (tx) => {
       const current = await tx.order.findUnique({
         where: { id },
-        include: { lines: true, productionJob: true, shipment: true }
+        include: { lines: true, productionJob: true, shipment: true },
       });
 
       if (!current) {
@@ -187,23 +221,38 @@ export class OrdersService {
           priority: data.priority,
           paid: data.paid,
           total: data.total,
-          dueDate: data.dueDate ? new Date(data.dueDate) : undefined
+          dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
         },
-        include: {
-          lines: true
-        }
+        include: { lines: true },
       });
 
       const nextStatus = data.status || current.status;
+      const prevConsumesStock = consumesStock(current.status);
+      const nextConsumesStock = consumesStock(nextStatus);
+      const lineInputs = current.lines.map((line) => ({
+        posterId: line.posterId,
+        quantity: line.quantity,
+      }));
 
-      // 1. Sync Production Job if status moves into print queue stages
-      const productionStages = ['Design Approved', 'Printing Queued', 'Printing In Progress', 'Lamination', 'Framing', 'Packaging'];
+      if (!prevConsumesStock && nextConsumesStock) {
+        await applyStockConsumption(tx, lineInputs, current.orderNo);
+      } else if (prevConsumesStock && nextStatus === 'Cancelled') {
+        await restoreStockConsumption(tx, lineInputs, current.orderNo);
+      }
+
+      if (data.total !== undefined && data.total !== current.total) {
+        await syncCustomerStats(tx, current.customerId);
+      }
+
+      const productionStages = PRODUCTION_JOB_CREATE_STAGES as readonly string[];
+      const syncStages = PRODUCTION_JOB_STAGES as readonly string[];
+
       if (productionStages.includes(nextStatus)) {
         if (!current.productionJob) {
-          const count = await tx.productionJob.count();
+          const jobNo = await nextSerialNumber(tx, 'JOB');
           await tx.productionJob.create({
             data: {
-              jobNo: `JOB-${500 + count + 1}`,
+              jobNo,
               orderId: updated.id,
               orderNo: updated.orderNo,
               customerName: updated.customerName,
@@ -211,50 +260,42 @@ export class OrdersService {
               priority: updated.priority,
               size: updated.lines[0]?.size || 'A3',
               material: updated.lines[0]?.framing || 'Matte paper',
-              operator: 'Operator Unassigned'
-            }
+              operator: null,
+            },
           });
         } else {
           await tx.productionJob.update({
             where: { id: current.productionJob.id },
-            data: {
-              stage: nextStatus,
-              priority: updated.priority
-            }
+            data: { stage: nextStatus, priority: updated.priority },
           });
         }
-      } else if (current.productionJob && ['Delivered', 'Cancelled'].includes(nextStatus)) {
-        // Update production job if completed or cancelled
+      } else if (current.productionJob && syncStages.includes(nextStatus)) {
         await tx.productionJob.update({
           where: { id: current.productionJob.id },
-          data: {
-            stage: nextStatus
-          }
+          data: { stage: nextStatus, priority: updated.priority },
         });
       }
 
-      // 2. Sync Shipment if status moves into shipping stages
       if (['Ready for Shipping', 'Delivered'].includes(nextStatus)) {
         if (!current.shipment) {
+          const defaults = await getShipmentDefaults(tx);
           const trackNo = `TRK${Math.floor(1000000 + Math.random() * 9000000)}`;
           await tx.shipment.create({
             data: {
               orderId: updated.id,
               orderNo: updated.orderNo,
               customerName: updated.customerName,
-              carrier: 'Delhivery',
+              carrier: defaults.carrier,
               trackingNo: trackNo,
               status: nextStatus === 'Delivered' ? 'Delivered' : 'Packed',
-              city: 'Delhi',
-              eta: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) // Today + 2 days
-            }
+              city: defaults.city,
+              eta: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+            },
           });
         } else if (nextStatus === 'Delivered') {
           await tx.shipment.update({
             where: { id: current.shipment.id },
-            data: {
-              status: 'Delivered'
-            }
+            data: { status: 'Delivered' },
           });
         }
       }
@@ -264,8 +305,28 @@ export class OrdersService {
   }
 
   async delete(id: string) {
-    return prisma.order.delete({
-      where: { id }
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { lines: true },
+    });
+
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    await artworksService.deleteByOrderId(id);
+
+    await prisma.$transaction(async (tx) => {
+      if (consumesStock(order.status)) {
+        await restoreStockConsumption(
+          tx,
+          order.lines.map((line) => ({ posterId: line.posterId, quantity: line.quantity })),
+          order.orderNo
+        );
+      }
+
+      await tx.order.delete({ where: { id } });
+      await syncCustomerStats(tx, order.customerId);
     });
   }
 }

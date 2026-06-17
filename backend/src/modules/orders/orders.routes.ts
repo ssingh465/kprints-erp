@@ -8,6 +8,7 @@ import { protect, requireWrite } from '../../middleware/protect.js';
 import { audit } from '../../services/audit.service.js';
 import type { AuthVariables } from '../../types/auth.js';
 import type { AuthContext } from '../../middleware/auth.js';
+import { replayIdempotentResponse, storeIdempotentResponse } from '../../utils/idempotency.js';
 
 const ordersApp = new Hono<{ Variables: AuthVariables }>();
 const service = new OrdersService();
@@ -81,6 +82,14 @@ ordersApp.get('/:id', async (c) => {
 ordersApp.post('/', requireWrite('orders'), zValidator('json', orderCreateSchema), async (c) => {
   const body = c.req.valid('json');
   const actor = c.get('appUser');
+  const idempotencyKey = c.req.header('Idempotency-Key');
+
+  const replay = await replayIdempotentResponse(idempotencyKey);
+  if (replay) {
+    c.header('Idempotency-Replayed', 'true');
+    return c.json(replay.body, replay.statusCode as 201);
+  }
+
   try {
     const order = await service.create(body);
     await audit.log({
@@ -90,16 +99,19 @@ ordersApp.post('/', requireWrite('orders'), zValidator('json', orderCreateSchema
       entityId: order.id,
       metadata: { orderNo: order.orderNo },
     });
-    return c.json({
+    const payload = {
       success: true,
       data: order,
-      message: 'Order placed successfully'
-    }, 201);
-  } catch (error: any) {
+      message: 'Order placed successfully',
+    };
+    await storeIdempotentResponse(idempotencyKey, c.req.method, c.req.path, 201, payload);
+    return c.json(payload, 201);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Order placement failed';
     return c.json({
       success: false,
       error: 'OrderPlacementError',
-      message: error.message
+      message,
     }, 400);
   }
 });

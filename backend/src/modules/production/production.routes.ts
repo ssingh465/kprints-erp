@@ -2,8 +2,10 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { ProductionService } from './production.service.js';
+import { PRODUCTION_JOB_STAGES } from '../../constants/stages.js';
 import { parseQueryParams } from '../../utils/query.js';
 import { protect, requireWrite } from '../../middleware/protect.js';
+import { audit } from '../../services/audit.service.js';
 import type { AuthVariables } from '../../types/auth.js';
 
 const productionApp = new Hono<{ Variables: AuthVariables }>();
@@ -13,22 +15,9 @@ productionApp.use('*', ...protect('production'));
 
 // Validation Schemas
 const stageUpdateSchema = z.object({
-  stage: z.enum([
-    'Draft',
-    'Design Pending',
-    'Design Approved',
-    'Printing Queued',
-    'Printing In Progress',
-    'Lamination',
-    'Framing',
-    'Packaging',
-    'Ready for Pickup',
-    'Ready for Shipping',
-    'Delivered',
-    'Cancelled'
-  ], {
-    errorMap: () => ({ message: 'Invalid order/production stage' })
-  })
+  stage: z.enum(PRODUCTION_JOB_STAGES, {
+    errorMap: () => ({ message: 'Invalid order/production stage' }),
+  }),
 });
 
 const operatorAssignSchema = z.object({
@@ -87,9 +76,22 @@ productionApp.get('/:id', async (c) => {
 productionApp.put('/:id/stage', requireWrite('production'), zValidator('json', stageUpdateSchema), async (c) => {
   const id = c.req.param('id');
   const body = c.req.valid('json');
+  const actor = c.get('appUser');
+  const before = await service.getById(id);
 
   try {
     const job = await service.updateStage(id, body.stage);
+    await audit.log({
+      userId: actor?.id,
+      action: 'stage_change',
+      entity: 'production',
+      entityId: job.id,
+      metadata: {
+        jobNo: job.jobNo,
+        fromStage: before?.stage,
+        toStage: body.stage,
+      },
+    });
     return c.json({
       success: true,
       data: job,
@@ -108,9 +110,17 @@ productionApp.put('/:id/stage', requireWrite('production'), zValidator('json', s
 productionApp.put('/:id/operator', requireWrite('production'), zValidator('json', operatorAssignSchema), async (c) => {
   const id = c.req.param('id');
   const body = c.req.valid('json');
+  const actor = c.get('appUser');
 
   try {
     const job = await service.assignOperator(id, body.operator, body.estimatedCompletion);
+    await audit.log({
+      userId: actor?.id,
+      action: 'operator_assign',
+      entity: 'production',
+      entityId: job.id,
+      metadata: { jobNo: job.jobNo, operator: body.operator },
+    });
     return c.json({
       success: true,
       data: job,

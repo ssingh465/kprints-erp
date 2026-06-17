@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma.js';
+import type { Prisma } from '@prisma/client';
 
 export class InventoryService {
   async list(options: {
@@ -12,7 +13,7 @@ export class InventoryService {
   }) {
     const { search, category, supplierId, skip, take, sortBy, sortOrder } = options;
 
-    const where: any = {};
+    const where: Prisma.InventoryItemWhereInput = {};
 
     if (search) {
       where.OR = [

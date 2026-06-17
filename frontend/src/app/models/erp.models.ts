@@ -72,7 +72,41 @@ export interface Order extends BaseEntity {
   dueDate: string;
   total: number;
   paid: number;
+  discount?: number;
   lines: OrderLine[];
+  payments?: OrderPayment[];
+}
+
+export interface OrderPayment extends BaseEntity {
+  orderId: string;
+  amount: number;
+  receivedAt: string;
+  method: 'Cash' | 'UPI' | 'Card' | 'Bank Transfer';
+  notes?: string | null;
+}
+
+export interface SupplierPayment extends BaseEntity {
+  supplierId: string;
+  amount: number;
+  paidAt: string;
+  method: 'Cash' | 'UPI' | 'Card' | 'Bank Transfer';
+  notes?: string | null;
+}
+
+export interface Invoice extends BaseEntity {
+  orderId: string;
+  invoiceNo: string;
+  amount: number;
+  pdfUrl?: string | null;
+  order?: {
+    orderNo: string;
+    customerName: string;
+    total: number;
+  };
+}
+
+export interface PosterCategory extends BaseEntity {
+  name: string;
 }
 
 export interface InventoryItem extends BaseEntity {

@@ -25,23 +25,78 @@ function addDays(anchor: Date, days: number): Date {
   return date;
 }
 
+let setupRunning = false;
+
 export class SetupService {
   async getStatus() {
     const settings = await prisma.settings.findFirst();
     if (!settings) {
       return {
         setupCompleted: false,
-        demoMode: false
+        demoMode: false,
+        setupInProgress: false,
       };
     }
     return {
       setupCompleted: settings.setupCompleted,
-      demoMode: settings.demoMode
+      demoMode: settings.demoMode,
+      setupInProgress: settings.setupInProgress,
     };
+  }
+
+  private async beginSetup(): Promise<void> {
+    if (setupRunning) {
+      throw new Error('A setup operation is already in progress');
+    }
+
+    setupRunning = true;
+    const existing = await prisma.settings.findFirst();
+    if (existing) {
+      await prisma.settings.update({
+        where: { id: existing.id },
+        data: { setupInProgress: true, setupCompleted: false },
+      });
+      return;
+    }
+
+    await prisma.settings.create({
+      data: {
+        companyName: 'KPrints ERP',
+        setupCompleted: false,
+        demoMode: false,
+        setupInProgress: true,
+      },
+    });
+  }
+
+  private async finishSetup(data: {
+    companyName: string;
+    demoMode: boolean;
+  }) {
+    await prisma.settings.deleteMany();
+    const settings = await prisma.settings.create({
+      data: {
+        companyName: data.companyName,
+        currency: 'INR',
+        setupCompleted: true,
+        demoMode: data.demoMode,
+        setupInProgress: false,
+      },
+    });
+    setupRunning = false;
+    return settings;
+  }
+
+  private async abortSetup(): Promise<void> {
+    setupRunning = false;
+    await prisma.settings.updateMany({ data: { setupInProgress: false } });
   }
 
   async wipeDatabase() {
     console.log('Wiping database...');
+    await prisma.orderPayment.deleteMany();
+    await prisma.supplierPayment.deleteMany();
+    await prisma.requestIdempotency.deleteMany();
     await prisma.orderItem.deleteMany();
     await prisma.productionJob.deleteMany();
     await prisma.shipment.deleteMany();
@@ -83,132 +138,130 @@ export class SetupService {
   }
 
   async initializeDemo() {
-    await this.wipeDatabase();
+    await this.beginSetup();
 
-    console.log('Seeding demo data...');
-    const anchor = new Date();
+    try {
+      await this.wipeDatabase();
 
-    await prisma.customer.createMany({ data: mockCustomers });
-    await prisma.supplier.createMany({ data: mockSuppliers });
-    await prisma.poster.createMany({ data: mockPosters });
-    await prisma.inventoryItem.createMany({ data: mockInventory });
+      console.log('Seeding demo data...');
+      const anchor = new Date();
 
-    const monthStarts = buildLast6MonthStarts(anchor);
-    const monthlyMetrics = buildMonthlyMetrics(anchor);
+      await prisma.customer.createMany({ data: mockCustomers });
+      await prisma.supplier.createMany({ data: mockSuppliers });
+      await prisma.poster.createMany({ data: mockPosters });
+      await prisma.inventoryItem.createMany({ data: mockInventory });
 
-    const historicalOrders = buildHistoricalOrders(monthStarts);
-    for (const order of historicalOrders) {
-      const { lines, createdAt, ...orderData } = order;
-      await prisma.order.create({
-        data: {
-          ...orderData,
-          createdAt,
-          lines: { createMany: { data: lines } },
-        },
+      const monthStarts = buildLast6MonthStarts(anchor);
+      const monthlyMetrics = buildMonthlyMetrics(anchor);
+
+      const historicalOrders = buildHistoricalOrders(monthStarts);
+      for (const order of historicalOrders) {
+        const { lines, createdAt, ...orderData } = order;
+        await prisma.order.create({
+          data: {
+            ...orderData,
+            createdAt,
+            lines: { createMany: { data: lines } },
+          },
+        });
+      }
+
+      for (const order of mockOrders) {
+        const { lines, ...orderData } = order;
+        const dueOffset = order.orderNo === 'ORD-1048' ? 2
+          : order.orderNo === 'ORD-1049' ? 1
+          : order.orderNo === 'ORD-1050' ? 3
+          : -1;
+
+        await prisma.order.create({
+          data: {
+            ...orderData,
+            dueDate: addDays(anchor, dueOffset),
+            createdAt: addDays(anchor, -2),
+            lines: { createMany: { data: lines } },
+          },
+        });
+      }
+
+      const printJobs = mockPrintJobs.map((job) => ({
+        ...job,
+        estimatedCompletion: addDays(anchor, job.jobNo === 'JOB-501' ? 1 : 2),
+      }));
+      await prisma.productionJob.createMany({ data: printJobs });
+
+      const shipments = mockShipments.map((shipment) => ({
+        ...shipment,
+        eta: addDays(anchor, shipment.status === 'Delivered' ? -2 : 1),
+      }));
+      await prisma.shipment.createMany({ data: shipments });
+
+      const historicalExpenses = buildHistoricalExpenses(monthStarts);
+      const currentExpenses = mockExpenses.map((expense, index) => ({
+        ...expense,
+        date: addDays(anchor, -(5 - index)),
+      }));
+
+      await prisma.expense.createMany({
+        data: [...historicalExpenses, ...currentExpenses],
       });
-    }
 
-    for (const order of mockOrders) {
-      const { lines, ...orderData } = order;
-      const dueOffset = order.orderNo === 'ORD-1048' ? 2
-        : order.orderNo === 'ORD-1049' ? 1
-        : order.orderNo === 'ORD-1050' ? 3
-        : -1;
+      await prisma.coupon.createMany({ data: mockCoupons });
 
-      await prisma.order.create({
-        data: {
-          ...orderData,
-          dueDate: addDays(anchor, dueOffset),
-          createdAt: addDays(anchor, -2),
-          lines: { createMany: { data: lines } },
-        },
-      });
-    }
+      for (const partner of mockPartners) {
+        const { investments, ...partnerData } = partner;
+        await prisma.partner.create({
+          data: {
+            ...partnerData,
+            investments: { create: investments },
+          },
+        });
+      }
 
-    const printJobs = mockPrintJobs.map((job) => ({
-      ...job,
-      estimatedCompletion: addDays(anchor, job.jobNo === 'JOB-501' ? 1 : 2),
-    }));
-    await prisma.productionJob.createMany({ data: printJobs });
+      await prisma.artworkUpload.createMany({ data: mockArtworks });
 
-    const shipments = mockShipments.map((shipment) => ({
-      ...shipment,
-      eta: addDays(
-        anchor,
-        shipment.status === 'Delivered' ? -2 : 1
-      ),
-    }));
-    await prisma.shipment.createMany({ data: shipments });
+      for (const metric of monthlyMetrics) {
+        await prisma.dashboardSnapshot.create({
+          data: {
+            revenue: metric.revenue,
+            expenses: metric.expenses,
+            orders: metric.orders,
+            pendingPrintJobs: 0,
+            inventoryAlerts: 0,
+            profit: metric.revenue - metric.expenses,
+          },
+        });
+      }
 
-    const historicalExpenses = buildHistoricalExpenses(monthStarts);
-    const currentExpenses = mockExpenses.map((expense, index) => ({
-      ...expense,
-      date: addDays(anchor, -(5 - index)),
-    }));
+      await this.syncCustomerStats();
 
-    await prisma.expense.createMany({
-      data: [...historicalExpenses, ...currentExpenses],
-    });
-
-    await prisma.coupon.createMany({ data: mockCoupons });
-
-    for (const partner of mockPartners) {
-      const { investments, ...partnerData } = partner;
-      await prisma.partner.create({
-        data: {
-          ...partnerData,
-          investments: { create: investments },
-        },
-      });
-    }
-
-    await prisma.artworkUpload.createMany({ data: mockArtworks });
-
-    for (const metric of monthlyMetrics) {
-      await prisma.dashboardSnapshot.create({
-        data: {
-          revenue: metric.revenue,
-          expenses: metric.expenses,
-          orders: metric.orders,
-          pendingPrintJobs: 0,
-          inventoryAlerts: 0,
-          profit: metric.revenue - metric.expenses,
-        },
-      });
-    }
-
-    await this.syncCustomerStats();
-
-    const settings = await prisma.settings.create({
-      data: {
+      const settings = await this.finishSetup({
         companyName: 'KPrints ERP Demo',
-        currency: 'INR',
-        setupCompleted: true,
         demoMode: true,
-      },
-    });
+      });
 
-    console.log(
-      `Demo data seeded: ${historicalOrders.length} historical + ${mockOrders.length} active orders across the last 2 quarters.`
-    );
-    return settings;
+      console.log(
+        `Demo data seeded: ${historicalOrders.length} historical + ${mockOrders.length} active orders across the last 2 quarters.`
+      );
+      return settings;
+    } catch (error) {
+      await this.abortSetup();
+      throw error;
+    }
   }
 
   async initializeFresh() {
-    await this.wipeDatabase();
+    await this.beginSetup();
 
-    console.log('Initializing fresh blank database...');
-
-    const settings = await prisma.settings.create({
-      data: {
+    try {
+      await this.wipeDatabase();
+      console.log('Initializing fresh blank database...');
+      return await this.finishSetup({
         companyName: 'KPrints ERP',
-        currency: 'INR',
-        setupCompleted: true,
-        demoMode: false
-      }
-    });
-
-    console.log('Blank database initialized successfully.');
-    return settings;
+        demoMode: false,
+      });
+    } catch (error) {
+      await this.abortSetup();
+      throw error;
+    }
   }
 }

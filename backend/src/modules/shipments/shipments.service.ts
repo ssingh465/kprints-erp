@@ -1,9 +1,10 @@
 import { prisma } from '../../lib/prisma.js';
+import type { Prisma } from '@prisma/client';
 
 export class ShipmentsService {
   async list(options: { search?: string; status?: string; skip?: number; take?: number }) {
     const { search, status, skip, take } = options;
-    const where: any = {};
+    const where: Prisma.ShipmentWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -84,11 +85,20 @@ export class ShipmentsService {
       });
 
       if (status === 'Delivered') {
-        // Sync Order status
         await tx.order.update({
           where: { id: shipment.orderId },
           data: { status: 'Delivered' }
         });
+
+        const job = await tx.productionJob.findUnique({
+          where: { orderId: shipment.orderId },
+        });
+        if (job) {
+          await tx.productionJob.update({
+            where: { id: job.id },
+            data: { stage: 'Delivered' },
+          });
+        }
       }
 
       return updated;

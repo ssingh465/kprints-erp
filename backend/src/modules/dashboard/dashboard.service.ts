@@ -14,11 +14,8 @@ export interface OperationalSignals {
   activityTimeline: ActivityEvent[];
 }
 
-const UNASSIGNED_OPERATOR = 'Operator Unassigned';
-
 function isUnassignedOperator(operator: string | null | undefined): boolean {
-  const value = operator?.trim();
-  return !value || value === UNASSIGNED_OPERATOR;
+  return !operator?.trim();
 }
 
 export class DashboardService {

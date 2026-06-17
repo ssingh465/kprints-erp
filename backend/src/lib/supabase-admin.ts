@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { config } from '../config/index.js';
 
 /**
@@ -8,19 +8,34 @@ import { config } from '../config/index.js';
  *
  * NEVER expose the service role key to the frontend.
  */
-if (!config.supabaseUrl || !config.supabaseServiceKey) {
-  console.warn(
-    'Warning: SUPABASE_URL or service role key not set — auth verification will fail until configured.'
-  );
+let _client: SupabaseClient | null = null;
+
+export function isSupabaseAdminConfigured(): boolean {
+  return Boolean(config.supabaseUrl && config.supabaseServiceKey);
 }
 
-export const supabaseAdmin = createClient(
-  config.supabaseUrl || 'https://placeholder.supabase.co',
-  config.supabaseServiceKey || 'placeholder-key',
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+export function getSupabaseAdmin(): SupabaseClient {
+  if (!isSupabaseAdminConfigured()) {
+    throw new Error(
+      'SUPABASE_URL and SUPABASE_SERVICE_KEY must be configured for server-side auth operations.'
+    );
   }
-);
+
+  if (!_client) {
+    _client = createClient(config.supabaseUrl, config.supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+  }
+
+  return _client;
+}
+
+/** @deprecated Prefer getSupabaseAdmin() — lazy init with configuration guard */
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+  get(_target, prop, receiver) {
+    return Reflect.get(getSupabaseAdmin(), prop, receiver);
+  },
+});

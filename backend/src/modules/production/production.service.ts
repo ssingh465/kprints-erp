@@ -1,4 +1,11 @@
 import { prisma } from '../../lib/prisma.js';
+import { getShipmentDefaults } from '../../utils/shipment-defaults.js';
+import type { Prisma } from '@prisma/client';
+import {
+  applyStockConsumption,
+  consumesStock,
+  restoreStockConsumption,
+} from '../../utils/order-inventory.js';
 
 export class ProductionService {
   async list(options: {
@@ -12,7 +19,7 @@ export class ProductionService {
   }) {
     const { search, stage, priority, skip, take, sortBy, sortOrder } = options;
 
-    const where: any = {};
+    const where: Prisma.ProductionJobWhereInput = {};
 
     if (search) {
       where.OR = [
@@ -60,6 +67,28 @@ export class ProductionService {
         throw new Error('Production job not found');
       }
 
+      const order = await tx.order.findUnique({
+        where: { id: job.orderId },
+        include: { lines: true },
+      });
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
+      const prevConsumesStock = consumesStock(order.status);
+      const nextConsumesStock = consumesStock(stage);
+
+      const lineInputs = order.lines.map((line) => ({
+        posterId: line.posterId,
+        quantity: line.quantity,
+      }));
+
+      if (!prevConsumesStock && nextConsumesStock) {
+        await applyStockConsumption(tx, lineInputs, order.orderNo);
+      } else if (prevConsumesStock && stage === 'Cancelled') {
+        await restoreStockConsumption(tx, lineInputs, order.orderNo);
+      }
+
       // Update job stage
       const updatedJob = await tx.productionJob.update({
         where: { id },
@@ -76,18 +105,19 @@ export class ProductionService {
       if (['Ready for Shipping', 'Ready for Pickup'].includes(stage)) {
         const currentShipment = await tx.shipment.findUnique({ where: { orderId: job.orderId } });
         if (!currentShipment) {
+          const defaults = await getShipmentDefaults(tx);
           const trackNo = `TRK${Math.floor(1000000 + Math.random() * 9000000)}`;
           await tx.shipment.create({
             data: {
               orderId: job.orderId,
               orderNo: job.orderNo,
               customerName: job.customerName,
-              carrier: 'Delhivery',
+              carrier: defaults.carrier,
               trackingNo: trackNo,
               status: 'Packed',
-              city: 'Delhi',
-              eta: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-            }
+              city: defaults.city,
+              eta: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+            },
           });
         }
       }
@@ -97,12 +127,28 @@ export class ProductionService {
   }
 
   async assignOperator(id: string, operator: string, estimatedCompletion?: string | Date) {
+    const operatorUser = await prisma.appUser.findFirst({
+      where: {
+        isActive: true,
+        isApproved: true,
+        role: { in: ['PRODUCTION_OPERATOR', 'MANAGER', 'ADMIN', 'SUPER_ADMIN'] },
+        OR: [
+          { fullName: { equals: operator, mode: 'insensitive' } },
+          { email: { equals: operator, mode: 'insensitive' } },
+        ],
+      },
+    });
+
+    if (!operatorUser) {
+      throw new Error('Operator must be an active production team member (name or email)');
+    }
+
     return prisma.productionJob.update({
       where: { id },
       data: {
-        operator,
-        estimatedCompletion: estimatedCompletion ? new Date(estimatedCompletion) : undefined
-      }
+        operator: operatorUser.fullName,
+        estimatedCompletion: estimatedCompletion ? new Date(estimatedCompletion) : undefined,
+      },
     });
   }
 }

@@ -24,6 +24,7 @@ import {
   FinanceSummary,
   MonthlyMetric,
   MonthlyMetricsResponse,
+  Invoice,
   Partner,
   PartnerListResponse,
   ProfitDistribution,
@@ -73,6 +74,8 @@ export class FinancePage implements OnInit {
   readonly summary = signal<FinanceSummary | null>(null);
   readonly monthlyMetrics = signal<MonthlyMetric[]>([]);
   readonly expenses = signal<Expense[]>([]);
+  readonly invoices = signal<Invoice[]>([]);
+  readonly invoicesLoading = signal(false);
   readonly periodLabel = computed(() => this.period.label());
 
   readonly revenue = computed(() => this.summary()?.revenue ?? 0);
@@ -135,11 +138,40 @@ export class FinancePage implements OnInit {
   ngOnInit(): void {
     this.loadFinanceData();
     this.loadPartners();
+    this.loadInvoices();
+  }
+
+  loadInvoices(): void {
+    this.invoicesLoading.set(true);
+    this.api.get<{ items: Invoice[] }>('/invoices?limit=100').subscribe({
+      next: (result) => {
+        this.invoices.set(result.items);
+        this.invoicesLoading.set(false);
+      },
+      error: () => {
+        this.invoices.set([]);
+        this.invoicesLoading.set(false);
+      },
+    });
+  }
+
+  deleteInvoice(invoice: Invoice): void {
+    if (!confirm(`Delete invoice ${invoice.invoiceNo}?`)) return;
+
+    this.api.delete(`/invoices/${invoice.id}`).subscribe({
+      next: () => {
+        this.loadInvoices();
+      },
+      error: (err) => {
+        this.partnersError.set(this.apiErrorMessage(err, 'Failed to delete invoice.'));
+      },
+    });
   }
 
   onPeriodChange(): void {
     this.loadFinanceData();
     this.loadPartners();
+    this.loadInvoices();
   }
 
   loadFinanceData(): void {
