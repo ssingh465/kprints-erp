@@ -83,7 +83,44 @@ The canonical IDs are exported from [`backend/src/test/test-ids.ts`](../backend/
 
 ---
 
-## 3. Factories (ad-hoc test data)
+## 3. QA role accounts
+
+Eight dedicated personas cover every `AppRole` for RBAC specs. Emails follow `qa-<role>@<domain>` (default domain `example.com` from `QA_USER_DOMAIN` in `backend/.env.test`).
+
+| Slug | Role | Email (default domain) |
+|------|------|------------------------|
+| `qa-super-admin` | SUPER_ADMIN | qa-super-admin@example.com |
+| `qa-admin` | ADMIN | qa-admin@example.com |
+| `qa-manager` | MANAGER | qa-manager@example.com |
+| `qa-staff` | STAFF | qa-staff@example.com |
+| `qa-designer` | DESIGNER | qa-designer@example.com |
+| `qa-production` | PRODUCTION_OPERATOR | qa-production@example.com |
+| `qa-finance` | FINANCE | qa-finance@example.com |
+| `qa-viewer` | VIEWER | qa-viewer@example.com |
+
+All personas share `QA_USER_PASSWORD` from `backend/.env.test`. Change the template placeholder before seeding — the seeder refuses `ChangeMe!QaTest123`.
+
+### One-time setup (TEST project)
+
+```bash
+cp backend/.env.test.example backend/.env.test
+# edit credentials + set a real QA_USER_PASSWORD
+
+npm run db:push
+npm run seed:qa-users
+cd e2e && npm install && cd ..
+npm run auth:setup
+```
+
+- [`backend/prisma/seed-qa-users.ts`](../backend/prisma/seed-qa-users.ts) — creates Supabase Auth users + upserts `app_users` (preserved across `test:reset`).
+- [`e2e/scripts/generate-auth-states.ts`](scripts/generate-auth-states.ts) — writes Playwright storage states to `e2e/.auth/<slug>.json` (gitignored).
+- [`e2e/fixtures/role-fixtures.ts`](fixtures/role-fixtures.ts) — `loginAs(page, 'qa-finance')`, `getQaAccessToken()`, and `qaAuthStatePath()` for `test.use({ storageState })`.
+
+Persona definitions live in [`backend/src/test/qa-users.ts`](../backend/src/test/qa-users.ts) and are re-exported from [`e2e/fixtures/qa-users.ts`](fixtures/qa-users.ts).
+
+---
+
+## 4. Factories (ad-hoc test data)
 
 Use canonical TEST_* IDs when a stable id matters. Use the factories in [`e2e/factories/`](factories/) when a test needs throwaway data (duplicate-email validation, pagination edge cases, etc.).
 
@@ -102,7 +139,7 @@ Factories are deliberately dependency-free (native `fetch`) so they run from bot
 
 ---
 
-## 4. Playwright global hooks
+## 5. Playwright global hooks
 
 - [`global-setup.ts`](global-setup.ts) — loads `.env.test`, re-asserts the guard, shells out to `npm run test:reset --prefix backend`.
 - [`global-teardown.ts`](global-teardown.ts) — no-op today; future hooks for upload cleanup + perf reports.
@@ -123,12 +160,13 @@ Playwright itself is **not** installed yet — it lands in the cross-cutting `pl
 
 ---
 
-## 5. Safety checklist before each run
+## 6. Safety checklist before each run
 
 - [ ] `backend/.env.test` exists and is gitignored.
 - [ ] `DATABASE_URL` points at a **TEST** Supabase project (or local Postgres on the allowlist).
 - [ ] `TEST_ENV=true` is set in `backend/.env.test`.
 - [ ] You have run `npm run db:push` against the TEST project at least once (Prisma schema in sync).
+- [ ] You have run `npm run seed:qa-users` at least once (QA personas in Supabase Auth + app_users).
 - [ ] You are NOT running this against the production project. The guard will refuse, but read this checklist anyway.
 
 The audit-doc reference for the safety rationale is [`docs/dependency-map.md`](docs/dependency-map.md) §8 and [`docs/missing-functionality-report.md`](docs/missing-functionality-report.md) gap G4 (demo-mode bypass).

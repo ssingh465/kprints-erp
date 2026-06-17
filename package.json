@@ -15,6 +15,8 @@
     "dev:all": "npx.cmd concurrently \"npm run backend:dev\" \"npm run start\"",
     "test:reset": "npm run test:reset --prefix backend",
     "test:reset:keep-audit": "npm run test:reset:keep-audit --prefix backend",
+    "seed:qa-users": "npm run seed:qa-users --prefix backend",
+    "auth:setup": "npm run auth:setup --prefix e2e",
     "vercel-build": "npm run vercel-build --prefix backend && npm run vercel-build --prefix frontend"
   }
 }

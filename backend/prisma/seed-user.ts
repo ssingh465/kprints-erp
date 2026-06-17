@@ -16,6 +16,10 @@
  *   TEST_USER_ROLE=VIEWER \
  *   npm run seed:user --prefix backend
  *
+ * All eight QA RBAC personas (recommended for E2E):
+ *
+ *   npm run seed:qa-users --prefix backend
+ *
  * Roles: SUPER_ADMIN | ADMIN | MANAGER | STAFF | DESIGNER | PRODUCTION_OPERATOR | FINANCE | VIEWER
  */
 import { PrismaClient, type AppRole } from '@prisma/client';
